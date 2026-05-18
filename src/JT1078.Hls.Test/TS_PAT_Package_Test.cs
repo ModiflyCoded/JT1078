@@ -8,7 +8,7 @@ using Xunit;
 namespace JT1078.Hls.Test
 {
     /// <summary>
-    ///  π”√doc/video/demo0.ts
+    ///  πÔøΩÔøΩdoc/video/demo0.ts
     /// </summary>
     public class TS_PAT_Package_Test
     {
@@ -33,7 +33,7 @@ namespace JT1078.Hls.Test
             TS_PAT_Package package = new TS_PAT_Package();
             package.Header = new TS_Header();
             package.Header.PID = 0;
-            package.Header.AdaptationFieldControl = AdaptationFieldControl.Œﬁ◊‘  ”¶”Ú_Ωˆ∫¨”––ß∏∫‘ÿ;
+            package.Header.AdaptationFieldControl = AdaptationFieldControl.‰ªÖÂê´Ëá™ÈÄÇÂ∫îÂüü_Êó†ÊúâÊïàË¥üËΩΩ;
             package.Header.ContinuityCounter = 0;
             package.TableId = 0;
             package.TransportStreamId = 0x0001;
@@ -46,8 +46,8 @@ namespace JT1078.Hls.Test
             });
             TSMessagePackWriter writer = new TSMessagePackWriter(new byte[188]);
             package.ToBuffer(ref writer);
-            var patData=writer.FlushAndGetArray().ToHexString();
-            Assert.Equal("47 40 00 10 00 00 B0 0D 00 01 C1 00 00 00 01 F0 00 2A B1 04 B2 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF".Replace(" ",""), patData);
+            var patData = writer.FlushAndGetArray().ToHexString();
+            Assert.Equal("47 40 00 10 00 00 B0 0D 00 01 C1 00 00 00 01 F0 00 2A B1 04 B2 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF".Replace(" ", ""), patData);
         }
     }
 }

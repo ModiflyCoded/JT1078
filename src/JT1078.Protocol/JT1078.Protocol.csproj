@@ -10,9 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Audio\FaacEncoder.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="System.Text.Encoding.CodePages" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>

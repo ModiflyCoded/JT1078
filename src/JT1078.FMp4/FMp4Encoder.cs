@@ -35,6 +35,7 @@ namespace JT1078.FMp4
         const uint SampleDescriptionIndex = 1;
         const uint DefaultSampleDuration = 40;
         const uint VideoTrackID = 1;
+        const uint AudioTrackID = 2;
         const int CacheSize=1024*1024;
 
         H264Decoder h264Decoder = new H264Decoder();
@@ -83,9 +84,9 @@ namespace JT1078.FMp4
         /// 编码moov盒子
         /// </summary>
         /// <returns></returns>
-        internal byte[] MoovBox(in H264NALU sps, in H264NALU pps)
+        internal byte[] MoovBox(in H264NALU sps, in H264NALU pps, byte[] aacConfig = null)
         {
-            byte[] buffer = FMp4ArrayPool.Rent(sps.RawData.Length + pps.RawData.Length + 1024);
+            byte[] buffer = FMp4ArrayPool.Rent(sps.RawData.Length + pps.RawData.Length + 2048);
             FMp4MessagePackWriter writer = new FMp4MessagePackWriter(buffer);
             try
             {
@@ -99,58 +100,114 @@ namespace JT1078.FMp4
                 movieBox.MovieHeaderBox.Duration = 0;
                 movieBox.MovieHeaderBox.Timescale = 1000;
                 movieBox.MovieHeaderBox.NextTrackID = 99;
-                movieBox.TrackBox = new TrackBox();
-                movieBox.TrackBox.TrackHeaderBox = new TrackHeaderBox(0, 3);
-                movieBox.TrackBox.TrackHeaderBox.CreationTime = 0;
-                movieBox.TrackBox.TrackHeaderBox.ModificationTime = 0;
-                movieBox.TrackBox.TrackHeaderBox.TrackID = VideoTrackID;
-                movieBox.TrackBox.TrackHeaderBox.Duration = 0;
-                movieBox.TrackBox.TrackHeaderBox.TrackIsAudio = false;
-                movieBox.TrackBox.TrackHeaderBox.Width = (uint)spsInfo.width;
-                movieBox.TrackBox.TrackHeaderBox.Height = (uint)spsInfo.height;
-                movieBox.TrackBox.MediaBox = new MediaBox();
-                movieBox.TrackBox.MediaBox.MediaHeaderBox = new MediaHeaderBox();
-                movieBox.TrackBox.MediaBox.MediaHeaderBox.CreationTime = 0;
-                movieBox.TrackBox.MediaBox.MediaHeaderBox.ModificationTime = 0;
-                movieBox.TrackBox.MediaBox.MediaHeaderBox.Timescale = 1000;
-                movieBox.TrackBox.MediaBox.MediaHeaderBox.Duration = 0;
-                movieBox.TrackBox.MediaBox.HandlerBox = new HandlerBox();
-                movieBox.TrackBox.MediaBox.HandlerBox.HandlerType = HandlerType.vide;
-                movieBox.TrackBox.MediaBox.HandlerBox.Name = "VideoHandler";
-                movieBox.TrackBox.MediaBox.MediaInformationBox = new MediaInformationBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.VideoMediaHeaderBox = new VideoMediaHeaderBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.DataInformationBox = new DataInformationBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox = new DataReferenceBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes = new List<DataEntryBox>();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes.Add(new DataEntryUrlBox(1));
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox = new SampleTableBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox = new SampleDescriptionBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries = new List<SampleEntry>();
+                movieBox.TrackBoxes = new List<TrackBox>();
+                //video track
+                TrackBox videoTrack = new TrackBox();
+                videoTrack.TrackHeaderBox = new TrackHeaderBox(0, 3);
+                videoTrack.TrackHeaderBox.CreationTime = 0;
+                videoTrack.TrackHeaderBox.ModificationTime = 0;
+                videoTrack.TrackHeaderBox.TrackID = VideoTrackID;
+                videoTrack.TrackHeaderBox.Duration = 0;
+                videoTrack.TrackHeaderBox.TrackIsAudio = false;
+                videoTrack.TrackHeaderBox.Width = (uint)spsInfo.width;
+                videoTrack.TrackHeaderBox.Height = (uint)spsInfo.height;
+                videoTrack.MediaBox = new MediaBox();
+                videoTrack.MediaBox.MediaHeaderBox = new MediaHeaderBox();
+                videoTrack.MediaBox.MediaHeaderBox.CreationTime = 0;
+                videoTrack.MediaBox.MediaHeaderBox.ModificationTime = 0;
+                videoTrack.MediaBox.MediaHeaderBox.Timescale = 1000;
+                videoTrack.MediaBox.MediaHeaderBox.Duration = 0;
+                videoTrack.MediaBox.HandlerBox = new HandlerBox();
+                videoTrack.MediaBox.HandlerBox.HandlerType = HandlerType.vide;
+                videoTrack.MediaBox.HandlerBox.Name = "VideoHandler";
+                videoTrack.MediaBox.MediaInformationBox = new MediaInformationBox();
+                videoTrack.MediaBox.MediaInformationBox.VideoMediaHeaderBox = new VideoMediaHeaderBox();
+                videoTrack.MediaBox.MediaInformationBox.DataInformationBox = new DataInformationBox();
+                videoTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox = new DataReferenceBox();
+                videoTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes = new List<DataEntryBox>();
+                videoTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes.Add(new DataEntryUrlBox(1));
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox = new SampleTableBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox = new SampleDescriptionBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries = new List<SampleEntry>();
                 AVC1SampleEntry avc1 = new AVC1SampleEntry();
                 avc1.AVCConfigurationBox = new AVCConfigurationBox();
                 //h264
-                avc1.Width = (ushort)movieBox.TrackBox.TrackHeaderBox.Width;
-                avc1.Height = (ushort)movieBox.TrackBox.TrackHeaderBox.Height;
+                avc1.Width = (ushort)videoTrack.TrackHeaderBox.Width;
+                avc1.Height = (ushort)videoTrack.TrackHeaderBox.Height;
                 avc1.AVCConfigurationBox.AVCLevelIndication = spsInfo.levelIdc;
                 avc1.AVCConfigurationBox.AVCProfileIndication = spsInfo.profileIdc;
                 avc1.AVCConfigurationBox.ProfileCompatibility = (byte)spsInfo.profileCompat;
                 avc1.AVCConfigurationBox.PPSs = new List<byte[]>() { pps.RawData };
                 avc1.AVCConfigurationBox.SPSs = new List<byte[]>() { sps.RawData };
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries.Add(avc1);
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.TimeToSampleBox = new TimeToSampleBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SyncSampleBox = new SyncSampleBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SampleToChunkBox = new SampleToChunkBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SampleSizeBox = new SampleSizeBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.ChunkOffsetBox = new ChunkOffsetBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries.Add(avc1);
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.TimeToSampleBox = new TimeToSampleBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SyncSampleBox = new SyncSampleBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleToChunkBox = new SampleToChunkBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleSizeBox = new SampleSizeBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.ChunkOffsetBox = new ChunkOffsetBox();
+                movieBox.TrackBoxes.Add(videoTrack);
+
                 movieBox.MovieExtendsBox = new MovieExtendsBox();
                 movieBox.MovieExtendsBox.TrackExtendsBoxs = new List<TrackExtendsBox>();
-                TrackExtendsBox trex = new TrackExtendsBox();
-                trex.TrackID = VideoTrackID;
-                trex.DefaultSampleDescriptionIndex = SampleDescriptionIndex;
-                trex.DefaultSampleDuration = 0;
-                trex.DefaultSampleSize = 0;
-                trex.DefaultSampleFlags = 0;
-                movieBox.MovieExtendsBox.TrackExtendsBoxs.Add(trex);
+                TrackExtendsBox videoTrex = new TrackExtendsBox();
+                videoTrex.TrackID = VideoTrackID;
+                videoTrex.DefaultSampleDescriptionIndex = SampleDescriptionIndex;
+                videoTrex.DefaultSampleDuration = 0;
+                videoTrex.DefaultSampleSize = 0;
+                videoTrex.DefaultSampleFlags = 0;
+                movieBox.MovieExtendsBox.TrackExtendsBoxs.Add(videoTrex);
+
+                if (aacConfig != null)
+                {
+                    //audio track
+                    TrackBox audioTrack = new TrackBox();
+                    audioTrack.TrackHeaderBox = new TrackHeaderBox(0, 3);
+                    audioTrack.TrackHeaderBox.CreationTime = 0;
+                    audioTrack.TrackHeaderBox.ModificationTime = 0;
+                    audioTrack.TrackHeaderBox.TrackID = AudioTrackID;
+                    audioTrack.TrackHeaderBox.Duration = 0;
+                    audioTrack.TrackHeaderBox.TrackIsAudio = true;
+                    audioTrack.MediaBox = new MediaBox();
+                    audioTrack.MediaBox.MediaHeaderBox = new MediaHeaderBox();
+                    audioTrack.MediaBox.MediaHeaderBox.CreationTime = 0;
+                    audioTrack.MediaBox.MediaHeaderBox.ModificationTime = 0;
+                    audioTrack.MediaBox.MediaHeaderBox.Timescale = 1000;
+                    audioTrack.MediaBox.MediaHeaderBox.Duration = 0;
+                    audioTrack.MediaBox.HandlerBox = new HandlerBox();
+                    audioTrack.MediaBox.HandlerBox.HandlerType = HandlerType.soun;
+                    audioTrack.MediaBox.HandlerBox.Name = "AudioHandler";
+                    audioTrack.MediaBox.MediaInformationBox = new MediaInformationBox();
+                    audioTrack.MediaBox.MediaInformationBox.SoundMediaHeaderBox = new SoundMediaHeaderBox();
+                    audioTrack.MediaBox.MediaInformationBox.DataInformationBox = new DataInformationBox();
+                    audioTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox = new DataReferenceBox();
+                    audioTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes = new List<DataEntryBox>();
+                    audioTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes.Add(new DataEntryUrlBox(1));
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox = new SampleTableBox();
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox = new SampleDescriptionBox();
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries = new List<SampleEntry>();
+                    
+                    MP4ASampleEntry mp4a = new MP4ASampleEntry();
+                    mp4a.SampleRate = 8000; // default for many JT1078
+                    mp4a.ChannelCount = 1;
+                    mp4a.ESDescriptorBox = new ElementaryStreamDescriptorBox(0, 0);
+                    mp4a.ESDescriptorBox.Config = aacConfig;
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries.Add(mp4a);
+
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.TimeToSampleBox = new TimeToSampleBox();
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleToChunkBox = new SampleToChunkBox();
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleSizeBox = new SampleSizeBox();
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.ChunkOffsetBox = new ChunkOffsetBox();
+                    movieBox.TrackBoxes.Add(audioTrack);
+
+                    TrackExtendsBox audioTrex = new TrackExtendsBox();
+                    audioTrex.TrackID = AudioTrackID;
+                    audioTrex.DefaultSampleDescriptionIndex = SampleDescriptionIndex;
+                    audioTrex.DefaultSampleDuration = 0;
+                    audioTrex.DefaultSampleSize = 0;
+                    audioTrex.DefaultSampleFlags = 0;
+                    movieBox.MovieExtendsBox.TrackExtendsBoxs.Add(audioTrex);
+                }
+
                 movieBox.ToBuffer(ref writer);
                 var data = writer.FlushAndGetArray();
                 return data;
@@ -306,8 +363,9 @@ namespace JT1078.FMp4
         /// ftyp moov
         /// </summary>
         /// <param name="avframe"></param>
+        /// <param name="aacConfig"></param>
         /// <returns></returns>
-        public byte[] FirstVideoBox(in JT1078AVFrame avframe)
+        public byte[] FirstVideoBox(in JT1078AVFrame avframe, byte[] aacConfig = null)
         {
             byte[] buffer = FMp4ArrayPool.Rent(CacheSize);
             FMp4MessagePackWriter writer = new FMp4MessagePackWriter(buffer);
@@ -335,63 +393,118 @@ namespace JT1078.FMp4
                 movieBox.MovieHeaderBox.Duration = 0;
                 movieBox.MovieHeaderBox.Timescale = 1000;
                 movieBox.MovieHeaderBox.NextTrackID = 99;
+                movieBox.TrackBoxes = new List<TrackBox>();
                 //trak
-                movieBox.TrackBox = new TrackBox();
-                movieBox.TrackBox.TrackHeaderBox = new TrackHeaderBox(0, 3);
-                movieBox.TrackBox.TrackHeaderBox.CreationTime = 0;
-                movieBox.TrackBox.TrackHeaderBox.ModificationTime = 0;
-                movieBox.TrackBox.TrackHeaderBox.TrackID = VideoTrackID;
-                movieBox.TrackBox.TrackHeaderBox.Duration = 0;
-                movieBox.TrackBox.TrackHeaderBox.TrackIsAudio = false;
-                movieBox.TrackBox.TrackHeaderBox.Width = (uint)avframe.Width;
-                movieBox.TrackBox.TrackHeaderBox.Height = (uint)avframe.Height;
-                movieBox.TrackBox.MediaBox = new MediaBox();
-                movieBox.TrackBox.MediaBox.MediaHeaderBox = new MediaHeaderBox();
-                movieBox.TrackBox.MediaBox.MediaHeaderBox.CreationTime = 0;
-                movieBox.TrackBox.MediaBox.MediaHeaderBox.ModificationTime = 0;
-                movieBox.TrackBox.MediaBox.MediaHeaderBox.Timescale = 1000;
-                movieBox.TrackBox.MediaBox.MediaHeaderBox.Duration = 0;
-                movieBox.TrackBox.MediaBox.HandlerBox = new HandlerBox();
-                movieBox.TrackBox.MediaBox.HandlerBox.HandlerType = HandlerType.vide;
-                movieBox.TrackBox.MediaBox.HandlerBox.Name = "VideoHandler";
-                movieBox.TrackBox.MediaBox.MediaInformationBox = new MediaInformationBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.VideoMediaHeaderBox = new VideoMediaHeaderBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.DataInformationBox = new DataInformationBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox = new DataReferenceBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes = new List<DataEntryBox>();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes.Add(new DataEntryUrlBox(1));
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox = new SampleTableBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox = new SampleDescriptionBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries = new List<SampleEntry>();
+                TrackBox videoTrack = new TrackBox();
+                videoTrack.TrackHeaderBox = new TrackHeaderBox(0, 3);
+                videoTrack.TrackHeaderBox.CreationTime = 0;
+                videoTrack.TrackHeaderBox.ModificationTime = 0;
+                videoTrack.TrackHeaderBox.TrackID = VideoTrackID;
+                videoTrack.TrackHeaderBox.Duration = 0;
+                videoTrack.TrackHeaderBox.TrackIsAudio = false;
+                videoTrack.TrackHeaderBox.Width = (uint)avframe.Width;
+                videoTrack.TrackHeaderBox.Height = (uint)avframe.Height;
+                videoTrack.MediaBox = new MediaBox();
+                videoTrack.MediaBox.MediaHeaderBox = new MediaHeaderBox();
+                videoTrack.MediaBox.MediaHeaderBox.CreationTime = 0;
+                videoTrack.MediaBox.MediaHeaderBox.ModificationTime = 0;
+                videoTrack.MediaBox.MediaHeaderBox.Timescale = 1000;
+                videoTrack.MediaBox.MediaHeaderBox.Duration = 0;
+                videoTrack.MediaBox.HandlerBox = new HandlerBox();
+                videoTrack.MediaBox.HandlerBox.HandlerType = HandlerType.vide;
+                videoTrack.MediaBox.HandlerBox.Name = "VideoHandler";
+                videoTrack.MediaBox.MediaInformationBox = new MediaInformationBox();
+                videoTrack.MediaBox.MediaInformationBox.VideoMediaHeaderBox = new VideoMediaHeaderBox();
+                videoTrack.MediaBox.MediaInformationBox.DataInformationBox = new DataInformationBox();
+                videoTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox = new DataReferenceBox();
+                videoTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes = new List<DataEntryBox>();
+                videoTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes.Add(new DataEntryUrlBox(1));
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox = new SampleTableBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox = new SampleDescriptionBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries = new List<SampleEntry>();
                 //h264 
                 //profileIdc profileCompat levelIdc
                 //0x64       0x00            0x1e
                 //avc1.64001e
                 AVC1SampleEntry avc1 = new AVC1SampleEntry();
                 avc1.AVCConfigurationBox = new AVCConfigurationBox();
-                avc1.Width = (ushort)movieBox.TrackBox.TrackHeaderBox.Width;
-                avc1.Height = (ushort)movieBox.TrackBox.TrackHeaderBox.Height;
+                avc1.Width = (ushort)videoTrack.TrackHeaderBox.Width;
+                avc1.Height = (ushort)videoTrack.TrackHeaderBox.Height;
                 avc1.AVCConfigurationBox.AVCLevelIndication    = avframe.LevelIdc;
                 avc1.AVCConfigurationBox.AVCProfileIndication  = avframe.ProfileIdc;
                 avc1.AVCConfigurationBox.ProfileCompatibility  = avframe.ProfileCompat;
                 avc1.AVCConfigurationBox.PPSs = new List<byte[]>() { avframe.PPS.RawData };
                 avc1.AVCConfigurationBox.SPSs = new List<byte[]>() { avframe.SPS.RawData };
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries.Add(avc1);
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.TimeToSampleBox = new TimeToSampleBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SyncSampleBox = new SyncSampleBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SampleToChunkBox = new SampleToChunkBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.SampleSizeBox = new SampleSizeBox();
-                movieBox.TrackBox.MediaBox.MediaInformationBox.SampleTableBox.ChunkOffsetBox = new ChunkOffsetBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries.Add(avc1);
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.TimeToSampleBox = new TimeToSampleBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SyncSampleBox = new SyncSampleBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleToChunkBox = new SampleToChunkBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleSizeBox = new SampleSizeBox();
+                videoTrack.MediaBox.MediaInformationBox.SampleTableBox.ChunkOffsetBox = new ChunkOffsetBox();
+                movieBox.TrackBoxes.Add(videoTrack);
+
                 movieBox.MovieExtendsBox = new MovieExtendsBox();
                 movieBox.MovieExtendsBox.TrackExtendsBoxs = new List<TrackExtendsBox>();
                 //trex
-                TrackExtendsBox trex = new TrackExtendsBox();
-                trex.TrackID = VideoTrackID;
-                trex.DefaultSampleDescriptionIndex = SampleDescriptionIndex;
-                trex.DefaultSampleDuration = 0;
-                trex.DefaultSampleSize = 0;
-                trex.DefaultSampleFlags = 0;
-                movieBox.MovieExtendsBox.TrackExtendsBoxs.Add(trex);
+                TrackExtendsBox videoTrex = new TrackExtendsBox();
+                videoTrex.TrackID = VideoTrackID;
+                videoTrex.DefaultSampleDescriptionIndex = SampleDescriptionIndex;
+                videoTrex.DefaultSampleDuration = 0;
+                videoTrex.DefaultSampleSize = 0;
+                videoTrex.DefaultSampleFlags = 0;
+                movieBox.MovieExtendsBox.TrackExtendsBoxs.Add(videoTrex);
+
+                if (aacConfig != null)
+                {
+                    //audio track
+                    TrackBox audioTrack = new TrackBox();
+                    audioTrack.TrackHeaderBox = new TrackHeaderBox(0, 3);
+                    audioTrack.TrackHeaderBox.CreationTime = 0;
+                    audioTrack.TrackHeaderBox.ModificationTime = 0;
+                    audioTrack.TrackHeaderBox.TrackID = AudioTrackID;
+                    audioTrack.TrackHeaderBox.Duration = 0;
+                    audioTrack.TrackHeaderBox.TrackIsAudio = true;
+                    audioTrack.MediaBox = new MediaBox();
+                    audioTrack.MediaBox.MediaHeaderBox = new MediaHeaderBox();
+                    audioTrack.MediaBox.MediaHeaderBox.CreationTime = 0;
+                    audioTrack.MediaBox.MediaHeaderBox.ModificationTime = 0;
+                    audioTrack.MediaBox.MediaHeaderBox.Timescale = 1000;
+                    audioTrack.MediaBox.MediaHeaderBox.Duration = 0;
+                    audioTrack.MediaBox.HandlerBox = new HandlerBox();
+                    audioTrack.MediaBox.HandlerBox.HandlerType = HandlerType.soun;
+                    audioTrack.MediaBox.HandlerBox.Name = "AudioHandler";
+                    audioTrack.MediaBox.MediaInformationBox = new MediaInformationBox();
+                    audioTrack.MediaBox.MediaInformationBox.SoundMediaHeaderBox = new SoundMediaHeaderBox();
+                    audioTrack.MediaBox.MediaInformationBox.DataInformationBox = new DataInformationBox();
+                    audioTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox = new DataReferenceBox();
+                    audioTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes = new List<DataEntryBox>();
+                    audioTrack.MediaBox.MediaInformationBox.DataInformationBox.DataReferenceBox.DataEntryBoxes.Add(new DataEntryUrlBox(1));
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox = new SampleTableBox();
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox = new SampleDescriptionBox();
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries = new List<SampleEntry>();
+
+                    MP4ASampleEntry mp4a = new MP4ASampleEntry();
+                    mp4a.SampleRate = 8000; // default for many JT1078
+                    mp4a.ChannelCount = 1;
+                    mp4a.ESDescriptorBox = new ElementaryStreamDescriptorBox(0, 0);
+                    mp4a.ESDescriptorBox.Config = aacConfig;
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleDescriptionBox.SampleEntries.Add(mp4a);
+
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.TimeToSampleBox = new TimeToSampleBox();
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleToChunkBox = new SampleToChunkBox();
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.SampleSizeBox = new SampleSizeBox();
+                    audioTrack.MediaBox.MediaInformationBox.SampleTableBox.ChunkOffsetBox = new ChunkOffsetBox();
+                    movieBox.TrackBoxes.Add(audioTrack);
+
+                    TrackExtendsBox audioTrex = new TrackExtendsBox();
+                    audioTrex.TrackID = AudioTrackID;
+                    audioTrex.DefaultSampleDescriptionIndex = SampleDescriptionIndex;
+                    audioTrex.DefaultSampleDuration = 0;
+                    audioTrex.DefaultSampleSize = 0;
+                    audioTrex.DefaultSampleFlags = 0;
+                    movieBox.MovieExtendsBox.TrackExtendsBoxs.Add(audioTrex);
+                }
+
                 movieBox.ToBuffer(ref writer);
 
                 var data = writer.FlushAndGetArray();
@@ -499,6 +612,107 @@ namespace JT1078.FMp4
                 movieFragmentBox.ToBuffer(ref writer);
                 //mdat
                 mediaDataBox.ToBuffer(ref writer);
+                var current2 = writer.GetCurrentPosition();
+                foreach (var postion in segmentIndexBox.ReferencedSizePositions)
+                {
+                    writer.WriteUInt32Return((uint)(current2 - current1), postion);
+                }
+                var data = writer.FlushAndGetArray();
+                return data;
+            }
+            finally
+            {
+                FMp4ArrayPool.Return(buffer);
+            }
+        }
+
+        /// <summary>
+        /// 编码音频数据盒子
+        /// styp sidx moof mdat
+        /// </summary>
+        /// <returns></returns>
+        public byte[] OtherAudioBox(in List<byte[]> aacFrames, in string key)
+        {
+            byte[] buffer = FMp4ArrayPool.Rent(CacheSize);
+            FMp4MessagePackWriter writer = new FMp4MessagePackWriter(buffer);
+            try
+            {
+                //styp
+                SegmentTypeBox stypTypeBox = new SegmentTypeBox();
+                stypTypeBox.MajorBrand = "msdh";
+                stypTypeBox.MinorVersion = "\0\0\0\0";
+                stypTypeBox.CompatibleBrands.Add("isom");
+                stypTypeBox.CompatibleBrands.Add("mp42");
+                stypTypeBox.CompatibleBrands.Add("msdh");
+                stypTypeBox.CompatibleBrands.Add("msix");
+                stypTypeBox.CompatibleBrands.Add("iso5");
+                stypTypeBox.CompatibleBrands.Add("iso6");
+                stypTypeBox.ToBuffer(ref writer);
+
+                if (!TrackInfos.TryGetValue(key + "_audio", out TrackInfo trackInfo))
+                {
+                    trackInfo = new TrackInfo { SN = 1, SubsegmentDuration = 0 };
+                    TrackInfos.Add(key + "_audio", trackInfo);
+                }
+                if (trackInfo.SN == 0)
+                {
+                    trackInfo.SN = 1;
+                }
+
+                uint totalDuration = (uint)(aacFrames.Count * DefaultSampleDuration);
+
+                //sidx
+                SegmentIndexBox segmentIndexBox = new SegmentIndexBox(1);
+                segmentIndexBox.ReferenceID = AudioTrackID;
+                segmentIndexBox.EarliestPresentationTime = trackInfo.SubsegmentDuration;
+                segmentIndexBox.SegmentIndexs = new List<SegmentIndexBox.SegmentIndex>()
+                {
+                     new SegmentIndexBox.SegmentIndex
+                     {
+                          SubsegmentDuration = totalDuration
+                     }
+                };
+                segmentIndexBox.ToBuffer(ref writer);
+
+                var current1 = writer.GetCurrentPosition();
+                //moof
+                var movieFragmentBox = new MovieFragmentBox();
+                movieFragmentBox.MovieFragmentHeaderBox = new MovieFragmentHeaderBox();
+                movieFragmentBox.MovieFragmentHeaderBox.SequenceNumber = trackInfo.SN;
+                movieFragmentBox.TrackFragmentBox = new TrackFragmentBox();
+                movieFragmentBox.TrackFragmentBox.TrackFragmentHeaderBox = new TrackFragmentHeaderBox(TfhdFlags);
+                movieFragmentBox.TrackFragmentBox.TrackFragmentHeaderBox.TrackID = AudioTrackID;
+                movieFragmentBox.TrackFragmentBox.TrackFragmentHeaderBox.SampleDescriptionIndex = SampleDescriptionIndex;
+                movieFragmentBox.TrackFragmentBox.TrackFragmentHeaderBox.DefaultSampleDuration = DefaultSampleDuration;
+                movieFragmentBox.TrackFragmentBox.TrackFragmentHeaderBox.DefaultSampleFlags = FMp4Constants.TFHD_FLAG_AUDIO_TPYE;
+                movieFragmentBox.TrackFragmentBox.TrackFragmentBaseMediaDecodeTimeBox = new TrackFragmentBaseMediaDecodeTimeBox();
+                movieFragmentBox.TrackFragmentBox.TrackFragmentBaseMediaDecodeTimeBox.BaseMediaDecodeTime = trackInfo.SubsegmentDuration;
+                
+                //trun
+                movieFragmentBox.TrackFragmentBox.TrackRunBox = new TrackRunBox(1, FMp4Constants.TRUN_FLAG_DATA_OFFSET_PRESENT | FMp4Constants.TRUN_FLAG_SAMPLE_SIZE_PRESENT);
+                movieFragmentBox.TrackFragmentBox.TrackRunBox.TrackRunInfos = new List<TrackRunBox.TrackRunInfo>();
+                
+                //mdat
+                var mediaDataBox = new MediaDataBox();
+                mediaDataBox.Data = new List<byte[]>();
+                
+                foreach (var frame in aacFrames)
+                {
+                    movieFragmentBox.TrackFragmentBox.TrackRunBox.TrackRunInfos.Add(new TrackRunBox.TrackRunInfo
+                    {
+                        SampleSize = (uint)frame.Length
+                    });
+                    mediaDataBox.Data.Add(frame);
+                }
+
+                //update trackInfo
+                trackInfo.SubsegmentDuration += totalDuration;
+                trackInfo.SN++;
+                TrackInfos[key + "_audio"] = trackInfo;
+
+                movieFragmentBox.ToBuffer(ref writer);
+                mediaDataBox.ToBuffer(ref writer);
+
                 var current2 = writer.GetCurrentPosition();
                 foreach (var postion in segmentIndexBox.ReferencedSizePositions)
                 {

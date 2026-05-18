@@ -50,6 +50,17 @@ namespace JT1078.Flv
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="aacEncoder"></param>
+        public FlvEncoder(IAudioEncoder aacEncoder)
+        {
+            audioCodecFactory = new AudioCodecFactory();
+            audioCodecFactory.AACEncoder = aacEncoder;
+            h264Decoder = new H264Decoder();
+        }
+
+        /// <summary>
         /// 编码flv头
         /// </summary>
         /// <param name="hasVideo">是否有视频</param>
@@ -357,22 +368,29 @@ namespace JT1078.Flv
         /// <param name="package"></param>
         /// <param name="needAacHeader">是否需要首帧音频</param>
         /// <returns></returns>
-        [Obsolete("音频暂时去掉")]
         public byte[] EncoderAudioTag(JT1078Package package, bool needAacHeader = false)
         {
             if (package.Label3.DataType != JT1078DataType.音频帧) throw new Exception("Incorrect parameter, package must be audio frame");
-            FlvMessagePackWriter flvMessagePackWriter = new FlvMessagePackWriter(new byte[65536]);
-            if (needAacHeader)
+            byte[] buffer = FlvArrayPool.Rent(package.Bodies.Length * 2 + 4096);
+            try
             {
-                flvMessagePackWriter.WriteArray(EncoderFirstAudioTag(package.Timestamp));
+                FlvMessagePackWriter flvMessagePackWriter = new FlvMessagePackWriter(buffer);
+                if (needAacHeader)
+                {
+                    flvMessagePackWriter.WriteArray(EncoderFirstAudioTag(package.Timestamp));
+                }
+                byte[] aacFrameData = audioCodecFactory.Encode(package.Label2.PT, package.Bodies);
+                if (aacFrameData != null && aacFrameData.Any())//编码成功，此时为一帧aac音频数据
+                {
+                    // Data Tag Frame
+                    flvMessagePackWriter.WriteArray(EncoderAacAudioTag((uint)package.Timestamp, aacFrameData));
+                }
+                return flvMessagePackWriter.FlushAndGetArray();
             }
-            byte[] aacFrameData = audioCodecFactory.Encode(package.Label2.PT, package.Bodies);
-            if (aacFrameData != null && aacFrameData.Any())//编码成功，此时为一帧aac音频数据
+            finally
             {
-                // Data Tag Frame
-                flvMessagePackWriter.WriteArray(EncoderAacAudioTag((uint)package.Timestamp, aacFrameData));
+                FlvArrayPool.Return(buffer);
             }
-            return flvMessagePackWriter.FlushAndGetArray();
         }
         /// <summary>
         /// 编码非首帧视频
@@ -432,7 +450,7 @@ namespace JT1078.Flv
 
         byte[] EncoderAacAudioTag(uint timestamp, byte[] aacFrameData)
         {
-            byte[] buffer = FlvArrayPool.Rent(aacFrameData.Length);
+            byte[] buffer = FlvArrayPool.Rent(aacFrameData.Length + 1024);
             try
             {
                 FlvMessagePackWriter flvMessagePackWriter = new FlvMessagePackWriter(buffer);

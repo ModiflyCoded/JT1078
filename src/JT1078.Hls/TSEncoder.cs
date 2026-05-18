@@ -33,8 +33,7 @@ namespace JT1078.Hls
         private const string ServiceName = "Koike&TK"; 
         private const int H264DefaultHZ = 90;
         private Dictionary<string, byte> VideoCounter;
-        //todo:音频同步
-        //private Dictionary<string, byte> AudioCounter = new Dictionary<string, byte>();
+        private Dictionary<string, byte> AudioCounter;
 
       /// <summary>
       /// 
@@ -42,6 +41,7 @@ namespace JT1078.Hls
         public TSEncoder()
         {
             VideoCounter = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+            AudioCounter = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
         }
 
         public byte[] CreateSDT(int minBufferSize = 188)
@@ -132,6 +132,12 @@ namespace JT1078.Hls
                      StreamType= StreamType.h264,
                      ElementaryPID = 256,
                      ESInfoLength=0
+                });
+                package.Components.Add(new TS_PMT_Component
+                {
+                    StreamType = StreamType.aac,
+                    ElementaryPID = 257,
+                    ESInfoLength = 0
                 });
                 TSMessagePackWriter messagePackReader = new TSMessagePackWriter(buffer);
                 package.ToBuffer(ref messagePackReader);
@@ -304,6 +310,132 @@ namespace JT1078.Hls
                 {
                     // nalu剩余183字节的时候
                     // 头部4个字节 + 自适应域长度1字节（0）+183 =188
+                    package.Header.AdaptationFieldControl = AdaptationFieldControl.无自适应域_仅含有效负载;
+                }
+                else
+                {
+                    package.Header.Adaptation = new TS_AdaptationInfo();
+                    package.Header.Adaptation.PCRIncluded = PCRInclude.不包含;
+                    package.Header.Adaptation.FillSize = (byte)(size);
+                    package.Header.AdaptationFieldControl = AdaptationFieldControl.同时带有自适应域和有效负载;
+                }
+            }
+            else
+            {
+                package.Header.PackageType = PackageType.Data_Segment;
+                package.Header.AdaptationFieldControl = AdaptationFieldControl.无自适应域_仅含有效负载;
+            }
+            package.Payload = nalu;
+            package.ToBuffer(ref writer);
+        }
+        public byte[] CreateAudioPES(in JT1078Package jt1078Package, byte[] aacFrame, int minBufferSize = 1024)
+        {
+            byte[] buffer = TSArrayPool.Rent(aacFrame.Length + minBufferSize);
+            TSMessagePackWriter messagePackReader = new TSMessagePackWriter(buffer);
+            try
+            {
+                int totalLength = 0;
+                TS_Package package = new TS_Package();
+                package.Header = new TS_Header();
+                totalLength += 4;
+                package.Header.PID = 257;
+                package.Header.PackageType = PackageType.Data_Start;
+                string key = jt1078Package.GetKey();
+                if (AudioCounter.TryGetValue(key, out byte counter))
+                {
+                    if (counter > 0xf)
+                    {
+                        counter = 0;
+                    }
+                }
+                else
+                {
+                    AudioCounter.Add(key, counter);
+                }
+                package.Header.ContinuityCounter = counter;
+                counter++;
+                package.Header.PayloadUnitStartIndicator = 1;
+                package.Header.Adaptation = new TS_AdaptationInfo();
+                package.Payload = new PES_Package();
+                package.Payload.StreamId = 0xc0;
+                package.Payload.PESPacketLength = 0;
+                totalLength += (3 + 1 + 1 + 1 + 2);
+                package.Payload.PTS_DTS_Flag = PTS_DTS_Flags.pts;
+                long timestamp = (long)jt1078Package.Timestamp;
+                totalLength += 5;
+                package.Payload.PTS = timestamp * H264DefaultHZ;
+
+                totalLength += TSConstants.FiexdESPackageHeaderLength;
+                var remainingLength = FiexdTSLength - totalLength;
+                int index = 0;
+                int fullSize = aacFrame.Length - remainingLength;
+                package.Payload.Payload = new ES_Package();
+                if (fullSize < 0)
+                {
+                    package.Header.AdaptationFieldControl = AdaptationFieldControl.同时带有自适应域和有效负载;
+                    fullSize = Math.Abs(fullSize);
+                    package.Header.Adaptation.FillSize = (byte)fullSize;
+                    package.Payload.Payload.NALUs = new List<byte[]>() { aacFrame };
+                    package.ToBuffer(ref messagePackReader);
+                }
+                else if (fullSize == 0)
+                {
+                    package.Header.AdaptationFieldControl = AdaptationFieldControl.无自适应域_仅含有效负载;
+                    package.Header.Adaptation.FillSize = 0;
+                    package.Payload.Payload.NALUs = new List<byte[]>() { aacFrame };
+                    package.ToBuffer(ref messagePackReader);
+                }
+                else
+                {
+                    package.Header.AdaptationFieldControl = AdaptationFieldControl.同时带有自适应域和有效负载;
+                    package.Header.Adaptation.FillSize = 0;
+                    package.Payload.Payload.NALUs = new List<byte[]>();
+                    ReadOnlySpan<byte> dataReader = aacFrame;
+                    package.Payload.Payload.NALUs.Add(dataReader.Slice(index, remainingLength).ToArray());
+                    index += remainingLength;
+                    package.ToBuffer(ref messagePackReader);
+                    while (index != aacFrame.Length)
+                    {
+                        if (counter > 0xf)
+                        {
+                            counter = 0;
+                        }
+                        int segmentFullSize = aacFrame.Length - index;
+                        if (segmentFullSize >= FiexdSegmentPESLength)
+                        {
+                            CreateAudioSegmentPES(ref messagePackReader, dataReader.Slice(index, FiexdSegmentPESLength).ToArray(), counter);
+                            index += FiexdSegmentPESLength;
+                        }
+                        else
+                        {
+                            CreateAudioSegmentPES(ref messagePackReader, dataReader.Slice(index, segmentFullSize).ToArray(), counter);
+                            index += segmentFullSize;
+                        }
+                        counter++;
+                    }
+                }
+                AudioCounter[key] = counter;
+                return messagePackReader.FlushAndGetArray();
+            }
+            finally
+            {
+                TSArrayPool.Return(buffer);
+            }
+        }
+        internal void CreateAudioSegmentPES(ref TSMessagePackWriter writer, byte[] nalu, byte counter)
+        {
+            TS_Segment_Package package = new TS_Segment_Package();
+            package.Header = new TS_Header();
+            package.Header.PID = 257;
+            package.Header.ContinuityCounter = counter;
+            package.Header.PayloadUnitStartIndicator = 0;
+            package.Payload = nalu;
+            if (nalu.Length < (FiexdSegmentPESLength))
+            {
+                int size = FiexdSegmentPESLength - 1 - 1 - nalu.Length;
+                package.Header.PackageType = PackageType.Data_End;
+                if (size < 0)
+                {
                     package.Header.AdaptationFieldControl = AdaptationFieldControl.无自适应域_仅含有效负载;
                 }
                 else

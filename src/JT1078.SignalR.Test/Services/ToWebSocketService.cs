@@ -22,7 +22,7 @@ using JT1078.Protocol.Enums;
 
 namespace JT1078.SignalR.Test.Services
 {
-    public  class ToWebSocketService: BackgroundService
+    public class ToWebSocketService : BackgroundService
     {
         private readonly ILogger<ToWebSocketService> logger;
 
@@ -60,7 +60,7 @@ namespace JT1078.SignalR.Test.Services
                 var bytes = line.ToHexBytes();
                 JT1078Package package = JT1078Serializer.Deserialize(bytes);
                 mergeBodyLength += package.DataBodyLength;
-                var packageMerge = JT1078Serializer.Merge(package);
+                var packageMerge = JT1078Serializer.Merge(package, JT808ChannelType.Live);
                 if (packageMerge != null)
                 {
                     packages.Add(packageMerge);
@@ -103,7 +103,7 @@ namespace JT1078.SignalR.Test.Services
             public List<H264NALU> NALUs { get; set; }
         }
 
-        public Dictionary<string,int> flag = new Dictionary<string, int>();
+        public Dictionary<string, int> flag = new Dictionary<string, int>();
 
         protected async override Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -112,7 +112,7 @@ namespace JT1078.SignalR.Test.Services
             {
                 try
                 {
-                    foreach(var session in wsSession.GetAll())
+                    foreach (var session in wsSession.GetAll())
                     {
                         if (flag.ContainsKey(session))
                         {
@@ -134,7 +134,7 @@ namespace JT1078.SignalR.Test.Services
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex,"");
+                    logger.LogError(ex, "");
                 }
                 await Task.Delay(60);
             }

@@ -34,7 +34,7 @@ namespace JT1078.Flv.Test
                     var data = line.Split(',');
                     var bytes = data[6].ToHexBytes();
                     JT1078Package package = JT1078Serializer.Deserialize(bytes);
-                    JT1078Package fullpackage = JT1078Serializer.Merge(package);
+                    JT1078Package fullpackage = JT1078Serializer.Merge(package, JT808ChannelType.Live);
                     if (fullpackage != null)
                     {
                         var videoTag = encoder.EncoderVideoTag(fullpackage, isNeedFirstHeadler);
@@ -71,7 +71,7 @@ namespace JT1078.Flv.Test
                     var data = line.Split(',');
                     var bytes = data[6].ToHexBytes();
                     JT1078Package package = JT1078Serializer.Deserialize(bytes);
-                    JT1078Package fullpackage = JT1078Serializer.Merge(package);
+                    JT1078Package fullpackage = JT1078Serializer.Merge(package, JT808ChannelType.Live);
                     if (fullpackage != null)
                     {
                         var videoTag = encoder.EncoderVideoTag(fullpackage, isNeedFirstHeadler);
@@ -107,7 +107,7 @@ namespace JT1078.Flv.Test
                     var data = line.Split(',');
                     var bytes = data[6].ToHexBytes();
                     JT1078Package package = JT1078Serializer.Deserialize(bytes);
-                    JT1078Package fullpackage = JT1078Serializer.Merge(package);
+                    JT1078Package fullpackage = JT1078Serializer.Merge(package, JT808ChannelType.Live);
                     if (fullpackage != null)
                     {
                         var videoTag = encoder.EncoderVideoTag(fullpackage, isNeedFirstHeadler);
@@ -144,7 +144,7 @@ namespace JT1078.Flv.Test
                     i++;
                     var bytes = line.ToHexBytes();
                     JT1078Package package = JT1078Serializer.Deserialize(bytes);
-                    JT1078Package fullpackage = JT1078Serializer.Merge(package);
+                    JT1078Package fullpackage = JT1078Serializer.Merge(package, JT808ChannelType.Live);
                     if (fullpackage != null)
                     {
                         var videoTag = encoder.EncoderVideoTag(fullpackage, isNeedFirstHeadler);
@@ -193,7 +193,7 @@ namespace JT1078.Flv.Test
                 var bytes = "3031636481E206AD0019013050370210000001749162905508480050000E0000000161E4025F0000030037A03031636481E206AE001901305037021000000174916290A508980050000E0000000161E4225F0000030037A0".ToHexBytes();
                 FlvEncoder encoder = new FlvEncoder();
                 JT1078Package package = JT1078Serializer.Deserialize(bytes);
-                JT1078Package fullpackage = JT1078Serializer.Merge(package);
+                JT1078Package fullpackage = JT1078Serializer.Merge(package, JT808ChannelType.Live);
                 if (fullpackage != null)
                 {
                     var videoTag = encoder.EncoderVideoTag(fullpackage, false);
@@ -212,7 +212,7 @@ namespace JT1078.Flv.Test
                 var bytes = "3031636481E2022D0019013050370210000001749179C79D05C80050000E0000000161E1E2FF000003006840".ToHexBytes();
                 FlvEncoder encoder = new FlvEncoder();
                 JT1078Package package = JT1078Serializer.Deserialize(bytes);
-                JT1078Package fullpackage = JT1078Serializer.Merge(package);
+                JT1078Package fullpackage = JT1078Serializer.Merge(package, JT808ChannelType.Live);
                 if (fullpackage != null)
                 {
                     var videoTag = encoder.EncoderVideoTag(fullpackage, false);

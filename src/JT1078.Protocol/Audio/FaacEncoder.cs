@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using System.Runtime.InteropServices;
+using JT1078.Protocol.Extensions;
 
 namespace JT1078.Protocol.Audio
 {
-    public interface IFaacEncoder:IDisposable
+    public interface IFaacEncoder : IAudioEncoder, IDisposable
     {
-        byte[] Encode(byte[] bytes);
     }
     public class FaacEncoder_x86 : IFaacEncoder
     {
@@ -42,9 +42,9 @@ namespace JT1078.Protocol.Audio
             if (FaacEncSetConfiguration(faacEncHandle, ptr) < 0) throw new Exception("set faac configuration failed!");
         }
 
-        public byte[] Encode(byte[] bytes)
+        public byte[] Encode(byte[] pcmData)
         {
-            frameCache.AddRange(bytes);
+            frameCache.AddRange(pcmData);
             if (frameCache.Count() < frameSize)//faac必须达到一帧数据后才能正常编码
                 return new byte[0];
             var outputBytes = new byte[maxOutput];
@@ -223,9 +223,9 @@ namespace JT1078.Protocol.Audio
             if (FaacEncSetConfiguration(faacEncHandle, ptr) < 0) throw new Exception("set faac configuration failed!");
         }
 
-        public byte[] Encode(byte[] bytes)
+        public byte[] Encode(byte[] pcmData)
         {
-            frameCache.AddRange(bytes);
+            frameCache.AddRange(pcmData);
             if (frameCache.Count() < frameSize)//faac必须达到一帧数据后才能正常编码
                 return new byte[0];
             var outputBytes = new byte[maxOutput];
