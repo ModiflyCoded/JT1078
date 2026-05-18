@@ -53,6 +53,21 @@
             分包处理标记
             </summary>
         </member>
+        <member name="T:JT1078.Protocol.Enums.JT808ChannelType">
+            <summary>
+            data channel type
+            </summary>
+        </member>
+        <member name="F:JT1078.Protocol.Enums.JT808ChannelType.Live">
+            <summary>
+            live channel
+            </summary>
+        </member>
+        <member name="F:JT1078.Protocol.Enums.JT808ChannelType.History">
+            <summary>
+            history channel
+            </summary>
+        </member>
         <member name="T:JT1078.Protocol.Extensions.HexExtensions">
             <summary>
             
@@ -354,6 +369,16 @@
             <summary>
             数据体
             </summary>
+        </member>
+        <member name="M:JT1078.Protocol.JT1078Serializer.Merge(JT1078.Protocol.JT1078Package,JT1078.Protocol.Enums.JT808ChannelType)">
+            <summary>
+            merge package
+            <para>due to the agreement cannot distinguish the Stream type, so need clear Stream type at the time of merger, avoid confusion</para>
+            </summary>
+            <param name="jT1078Package">package of jt1078</param>
+            <param name="channelType">package type is live or history</param>
+            <returns></returns>
+            <exception cref="T:System.Exception"></exception>
         </member>
         <member name="T:JT1078.Protocol.MessagePack.ExpGolombReader">
             <summary>

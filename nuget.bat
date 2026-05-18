@@ -1,0 +1,1 @@
+dotnet nuget push .\nupkgs\*.nupkg --source "github"
