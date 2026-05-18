@@ -48,9 +48,54 @@
             音视频类型
             </summary>
         </member>
+        <member name="F:JT1078.Protocol.Enums.JT1078DataType.VideoIFrame">
+            <summary>
+            Video I-frame (Intra-coded frame / Keyframe)
+            </summary>
+        </member>
+        <member name="F:JT1078.Protocol.Enums.JT1078DataType.VideoPFrame">
+            <summary>
+            Video P-frame (Predicted frame)
+            </summary>
+        </member>
+        <member name="F:JT1078.Protocol.Enums.JT1078DataType.VideoBFrame">
+            <summary>
+            Video B-frame (Bi-directional predicted frame)
+            </summary>
+        </member>
+        <member name="F:JT1078.Protocol.Enums.JT1078DataType.AudioFrame">
+            <summary>
+            Audio frame
+            </summary>
+        </member>
+        <member name="F:JT1078.Protocol.Enums.JT1078DataType.TransparentData">
+            <summary>
+            Transparent data (Pass-through / Custom data)
+            </summary>
+        </member>
         <member name="T:JT1078.Protocol.Enums.JT1078SubPackageType">
             <summary>
             分包处理标记
+            </summary>
+        </member>
+        <member name="F:JT1078.Protocol.Enums.JT1078SubPackageType.AtomicPacket">
+            <summary>
+            Atomic packet (Cannot be split/fragmented)
+            </summary>
+        </member>
+        <member name="F:JT1078.Protocol.Enums.JT1078SubPackageType.FirstPacket">
+            <summary>
+            First packet in a fragmented sequence
+            </summary>
+        </member>
+        <member name="F:JT1078.Protocol.Enums.JT1078SubPackageType.LastPacket">
+            <summary>
+            Last packet in a fragmented sequence
+            </summary>
+        </member>
+        <member name="F:JT1078.Protocol.Enums.JT1078SubPackageType.IntermediatePacket">
+            <summary>
+            Intermediate/Middle packet in a fragmented sequence
             </summary>
         </member>
         <member name="T:JT1078.Protocol.Enums.JT808ChannelType">

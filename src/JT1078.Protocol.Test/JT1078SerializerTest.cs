@@ -23,8 +23,8 @@ namespace JT1078.Protocol.Test
             jT1078Package.LastIFrameInterval = 0x0280;
             jT1078Package.LastFrameInterval = 0x0028;
             jT1078Package.Bodies = "00 00 00 01 61 E1 A2 BF 00 98 CF C0 EE 1E 17 28 34 07 78 8E 39 A4 03 FD DB D1 D5 46 BF B0 63 01 3F 59 AC 34 C9 7A 02 1A B9 6A 28 A4 2C 08".ToHexBytes();
-            var hex=JT1078Serializer.Serialize(jT1078Package).ToHexString();
-            Assert.Equal("30 31 63 64 81 E2 10 88 01 12 34 56 78 10 01 10 00 00 01 6B B3 92 CA 7C 02 80 00 28 00 2E 00 00 00 01 61 E1 A2 BF 00 98 CF C0 EE 1E 17 28 34 07 78 8E 39 A4 03 FD DB D1 D5 46 BF B0 63 01 3F 59 AC 34 C9 7A 02 1A B9 6A 28 A4 2C 08".Replace(" ",""), hex);
+            var hex = JT1078Serializer.Serialize(jT1078Package).ToHexString();
+            Assert.Equal("30 31 63 64 81 E2 10 88 01 12 34 56 78 10 01 10 00 00 01 6B B3 92 CA 7C 02 80 00 28 00 2E 00 00 00 01 61 E1 A2 BF 00 98 CF C0 EE 1E 17 28 34 07 78 8E 39 A4 03 FD DB D1 D5 46 BF B0 63 01 3F 59 AC 34 C9 7A 02 1A B9 6A 28 A4 2C 08".Replace(" ", ""), hex);
         }
 
         [Fact]
@@ -238,7 +238,7 @@ namespace JT1078.Protocol.Test
             Assert.Equal((ulong)1562085874181, package.Timestamp);
             Assert.Equal(0x0078, package.DataBodyLength);
             Assert.Equal("B7 6D FF EF 7D FB A9 9D FE A9 1F 37 77 F3 37 BE EF FB F7 FB FB BE 7D DF B7 FD FB 76 AF DE 77 65 C7 EF E3 FB BE FF DB 4E FF DB B7 63 FF EE EF D8 BE 1D 37 B7 7D E7 7D F3 C6 F7 FD F4 BE 1F F7 B7 55 FF 76 FC FE CE 7B FF B7 7D 3F F5 FF FE 76 6C DF FE 53 DB CF 6D FB BF FD DE B1 EF 3E 77 D3 3F 6E 9A BF BF FF DB F7 FD DB 7F 63 FF 6E EC F8 EE 1F FB FD 7F FB 7D 7C DB".ToHexBytes(), package.Bodies.ToArray());
-        }      
+        }
 
         [Fact]
         public void DeserializeTest6()
@@ -320,36 +320,36 @@ namespace JT1078.Protocol.Test
         {
             JT1078Label3 label3 = new JT1078Label3(34);
             Assert.Equal(34, label3.ToByte());
-            Assert.Equal(JT1078DataType.视频B帧, label3.DataType);
-            Assert.Equal(JT1078SubPackageType.分包处理时的最后一个包, label3.SubpackageType);
+            Assert.Equal(JT1078DataType.VideoBFrame, label3.DataType);
+            Assert.Equal(JT1078SubPackageType.LastPacket, label3.SubpackageType);
         }
 
         [Fact]
         public void Label3Test2()
         {
-            JT1078Label3 label3 = new JT1078Label3(JT1078DataType.视频B帧, JT1078SubPackageType.分包处理时的最后一个包);
+            JT1078Label3 label3 = new JT1078Label3(JT1078DataType.VideoBFrame, JT1078SubPackageType.LastPacket);
             Assert.Equal(34, label3.ToByte());
-            Assert.Equal(JT1078DataType.视频B帧, label3.DataType);
-            Assert.Equal(JT1078SubPackageType.分包处理时的最后一个包, label3.SubpackageType);
+            Assert.Equal(JT1078DataType.VideoBFrame, label3.DataType);
+            Assert.Equal(JT1078SubPackageType.LastPacket, label3.SubpackageType);
         }
 
         [Fact]
         public void MergeTest()
         {
-            var lines = File.ReadAllLines(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "h264","JT1078_1.txt"));
-            JT1078Package merge=null;
-            int mergeBodyLength=0;
+            var lines = File.ReadAllLines(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "h264", "JT1078_1.txt"));
+            JT1078Package merge = null;
+            int mergeBodyLength = 0;
             foreach (var line in lines)
             {
                 var data = line.Split(',');
                 var bytes = data[6].ToHexBytes();
                 JT1078Package package = JT1078Serializer.Deserialize(bytes);
                 mergeBodyLength += package.DataBodyLength;
-                merge = JT1078Serializer.Merge(package,JT808ChannelType.Live);
+                merge = JT1078Serializer.Merge(package, JT808ChannelType.Live);
             }
             Assert.NotNull(merge);
             Assert.Equal(mergeBodyLength, merge.Bodies.Length);
-            Assert.Equal(JT1078SubPackageType.分包处理时的第一个包, merge.Label3.SubpackageType);
+            Assert.Equal(JT1078SubPackageType.FirstPacket, merge.Label3.SubpackageType);
         }
 
     }

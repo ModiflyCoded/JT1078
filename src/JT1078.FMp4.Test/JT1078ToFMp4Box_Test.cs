@@ -453,7 +453,7 @@ namespace JT1078.FMp4.Test
             var ftyp = fMp4Encoder.FtypBox();
             fileStream.Write(ftyp);
 
-            var iPackage = packages.FirstOrDefault(f => f.Label3.DataType == JT1078DataType.视频I帧);
+            var iPackage = packages.FirstOrDefault(f => f.Label3.DataType == JT1078DataType.VideoIFrame);
             var iNalus = h264Decoder.ParseNALU(iPackage);
             //判断第一帧是否关键帧
             var moov = fMp4Encoder.MoovBox(
@@ -463,9 +463,9 @@ namespace JT1078.FMp4.Test
             List<JT1078Package> tmp = new List<JT1078Package>();
             foreach (var package in packages)
             {
-                if (package.Label3.DataType == Protocol.Enums.JT1078DataType.视频I帧)
+                if (package.Label3.DataType == Protocol.Enums.JT1078DataType.VideoIFrame)
                 {
-                    if (tmp.Count>0)
+                    if (tmp.Count > 0)
                     {
                         fileStream.Write(fMp4Encoder.StypBox());
                         var otherBuffer = fMp4Encoder.OtherVideoBox(tmp);
@@ -497,7 +497,7 @@ namespace JT1078.FMp4.Test
             }
             fileStream.Close();
         }
-              
+
         [Fact]
         public void Test4_4()
         {
@@ -517,7 +517,7 @@ namespace JT1078.FMp4.Test
             var ftyp = fMp4Encoder.FtypBox();
             fileStream.Write(ftyp);
 
-            var iPackage = packages.FirstOrDefault(f => f.Label3.DataType == JT1078DataType.视频I帧);
+            var iPackage = packages.FirstOrDefault(f => f.Label3.DataType == JT1078DataType.VideoIFrame);
             var iNalus = h264Decoder.ParseNALU(iPackage);
             //判断第一帧是否关键帧
             var moov = fMp4Encoder.MoovBox(
@@ -539,7 +539,7 @@ namespace JT1078.FMp4.Test
                     Mp4Frame mp4Frame = new Mp4Frame
                     {
                         Key = package.GetKey(),
-                        KeyFrame = package.Label3.DataType == JT1078DataType.视频I帧
+                        KeyFrame = package.Label3.DataType == JT1078DataType.VideoIFrame
                     };
                     mp4Frame.NALUs = h264NALUs;
                     mp4Frames.Enqueue(mp4Frame);
@@ -547,7 +547,7 @@ namespace JT1078.FMp4.Test
             }
             while (mp4Frames.TryDequeue(out Mp4Frame frame))
             {
-                fileStream.Write(fMp4Encoder.OtherVideoBox(frame.NALUs, frame.Key, frame.KeyFrame)); 
+                fileStream.Write(fMp4Encoder.OtherVideoBox(frame.NALUs, frame.Key, frame.KeyFrame));
             }
             fileStream.Close();
         }
@@ -570,11 +570,11 @@ namespace JT1078.FMp4.Test
             using var fileStream = new FileStream(filepath, FileMode.OpenOrCreate, FileAccess.Write);
             System.Net.WebSockets.ClientWebSocket clientWebSocket = new System.Net.WebSockets.ClientWebSocket();
             clientWebSocket.ConnectAsync(new Uri("ws://127.0.0.1:8080/live/JT1078_7.live.mp4"), CancellationToken.None).GetAwaiter().GetResult();
-            Task.Run(async() => 
+            Task.Run(async () =>
             {
                 while (true)
                 {
-                    var buffer = new byte[1024*1024];
+                    var buffer = new byte[1024 * 1024];
                     var result = await clientWebSocket.ReceiveAsync(buffer, CancellationToken.None);
                     if (result.EndOfMessage)
                     {

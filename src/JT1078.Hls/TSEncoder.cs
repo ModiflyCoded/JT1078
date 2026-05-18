@@ -30,15 +30,15 @@ namespace JT1078.Hls
         private const int FiexdSegmentPESLength = 184;
         private const int FiexdTSLength = 188;
         private const string ServiceProvider = "JTT1078";
-        private const string ServiceName = "Koike&TK"; 
+        private const string ServiceName = "Koike&TK";
         private const int H264DefaultHZ = 90;
         private Dictionary<string, byte> VideoCounter;
         //todo:音频同步
         //private Dictionary<string, byte> AudioCounter = new Dictionary<string, byte>();
 
-      /// <summary>
-      /// 
-      /// </summary>
+        /// <summary>
+        /// 
+        /// </summary>
         public TSEncoder()
         {
             VideoCounter = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
@@ -69,7 +69,7 @@ namespace JT1078.Hls
                     EITPresentFollowingFlag = 0x00,
                     RunningStatus = TS_SDT_Service_RunningStatus.运行,
                     FreeCAMode = 0x00,
-                    Descriptors = new List<TS_SDT_Service_Descriptor> 
+                    Descriptors = new List<TS_SDT_Service_Descriptor>
                     {
                          new TS_SDT_Service_Descriptor{
                             Tag=0x48,
@@ -81,7 +81,7 @@ namespace JT1078.Hls
                 });
                 TSMessagePackWriter writer = new TSMessagePackWriter(buffer);
                 package.ToBuffer(ref writer);
-                return  writer.FlushAndGetArray();
+                return writer.FlushAndGetArray();
             }
             finally
             {
@@ -129,9 +129,9 @@ namespace JT1078.Hls
                 package.Components = new List<TS_PMT_Component>();
                 package.Components.Add(new TS_PMT_Component
                 {
-                     StreamType= StreamType.h264,
-                     ElementaryPID = 256,
-                     ESInfoLength=0
+                    StreamType = StreamType.h264,
+                    ElementaryPID = 256,
+                    ESInfoLength = 0
                 });
                 TSMessagePackWriter messagePackReader = new TSMessagePackWriter(buffer);
                 package.ToBuffer(ref messagePackReader);
@@ -160,11 +160,11 @@ namespace JT1078.Hls
                 package.Header.PID = 256;
                 package.Header.PackageType = PackageType.Data_Start;
                 string key = jt1078Package.GetKey();
-                if(VideoCounter.TryGetValue(key,out byte counter))
+                if (VideoCounter.TryGetValue(key, out byte counter))
                 {
                     if (counter > 0xf)
                     {
-                        counter = 0; 
+                        counter = 0;
                     }
                 }
                 else
@@ -180,10 +180,10 @@ namespace JT1078.Hls
                 package.Payload.PESPacketLength = 0;
                 //PESStartCode + StreamId+ Flag1 + PTS_DTS_Flag + PESPacketLength
                 //3 + 1 + 1 + 1 + 2
-                totalLength += (3+1+1+1+2);
+                totalLength += (3 + 1 + 1 + 1 + 2);
                 package.Payload.PTS_DTS_Flag = PTS_DTS_Flags.all;
-                long timestamp= (long)jt1078Package.Timestamp;
-                if (jt1078Package.Label3.DataType== JT1078DataType.视频I帧)
+                long timestamp = (long)jt1078Package.Timestamp;
+                if (jt1078Package.Label3.DataType == JT1078DataType.VideoIFrame)
                 {
                     //ts header adaptation
                     //PCRIncluded + Timestamp
@@ -194,7 +194,7 @@ namespace JT1078.Hls
                     package.Payload.DTS = timestamp * H264DefaultHZ;
                     package.Payload.PTS = timestamp * H264DefaultHZ;
                 }
-                else if(jt1078Package.Label3.DataType == JT1078DataType.视频P帧)
+                else if (jt1078Package.Label3.DataType == JT1078DataType.VideoPFrame)
                 {
                     //ts header adaptation
                     //PCRIncluded 
@@ -227,7 +227,7 @@ namespace JT1078.Hls
                     package.Payload.Payload.NALUs = new List<byte[]>() { jt1078Package.Bodies };
                     package.ToBuffer(ref messagePackReader);
                 }
-                else if(fullSize==0)
+                else if (fullSize == 0)
                 {
                     //这个很重要，需要控制
                     package.Header.AdaptationFieldControl = AdaptationFieldControl.无自适应域_仅含有效负载;
@@ -247,7 +247,7 @@ namespace JT1078.Hls
                     package.Payload.Payload.NALUs.Add(dataReader.Slice(index, remainingLength).ToArray());
                     index += remainingLength;
                     package.ToBuffer(ref messagePackReader);
-                    while (index!= jt1078Package.Bodies.Length)
+                    while (index != jt1078Package.Bodies.Length)
                     {
                         if (counter > 0xf)
                         {
@@ -274,7 +274,7 @@ namespace JT1078.Hls
                         counter++;
                     }
                 }
-                VideoCounter[key]= counter;
+                VideoCounter[key] = counter;
                 return messagePackReader.FlushAndGetArray();
             }
             finally
@@ -282,7 +282,7 @@ namespace JT1078.Hls
                 TSArrayPool.Return(buffer);
             }
         }
-        internal void CreateSegmentPES(ref TSMessagePackWriter writer,byte[] nalu, byte counter)
+        internal void CreateSegmentPES(ref TSMessagePackWriter writer, byte[] nalu, byte counter)
         {
             TS_Segment_Package package = new TS_Segment_Package();
             package.Header = new TS_Header();

@@ -19,10 +19,10 @@ namespace JT1078.Protocol
         /// <param name="jT1078AVType"></param>
         /// <param name="timestamp"></param>
         /// <returns></returns>
-        public static List<JT1078Package> ConvertAudio(this byte[] value,string sim,int channelNo, JT1078AVType jT1078AVType, ulong timestamp)
+        public static List<JT1078Package> ConvertAudio(this byte[] value, string sim, int channelNo, JT1078AVType jT1078AVType, ulong timestamp)
         {
             List<JT1078Package> jT1078Packages = new List<JT1078Package>();
-            var buffer=Slice(value);
+            var buffer = Slice(value);
             if (buffer.Count == 1)
             {
                 JT1078Package jT1078Package = new JT1078Package();
@@ -31,11 +31,11 @@ namespace JT1078.Protocol
                 jT1078Package.SN = SeqUtil.Increment(sim);
                 jT1078Package.Timestamp = timestamp;
                 jT1078Package.Label2 = new JT1078Label2(1, jT1078AVType);
-                jT1078Package.Label3 = new JT1078Label3(JT1078DataType.音频帧, JT1078SubPackageType.原子包_不可被拆分);
+                jT1078Package.Label3 = new JT1078Label3(JT1078DataType.AudioFrame, JT1078SubPackageType.AtomicPacket);
                 jT1078Package.Bodies = buffer[0];
                 jT1078Packages.Add(jT1078Package);
             }
-            else if(buffer.Count == 2)
+            else if (buffer.Count == 2)
             {
                 JT1078Package jT1078Package1 = new JT1078Package();
                 jT1078Package1.SIM = sim;
@@ -43,16 +43,16 @@ namespace JT1078.Protocol
                 jT1078Package1.SN = SeqUtil.Increment(sim);
                 jT1078Package1.Timestamp = timestamp;
                 jT1078Package1.Label2 = new JT1078Label2(0, jT1078AVType);
-                jT1078Package1.Label3 = new JT1078Label3(JT1078DataType.音频帧, JT1078SubPackageType.分包处理时的第一个包);
+                jT1078Package1.Label3 = new JT1078Label3(JT1078DataType.AudioFrame, JT1078SubPackageType.FirstPacket);
                 jT1078Package1.Bodies = buffer[0];
                 jT1078Packages.Add(jT1078Package1);
-                JT1078Package jT1078Package2= new JT1078Package();
+                JT1078Package jT1078Package2 = new JT1078Package();
                 jT1078Package2.SIM = sim;
                 jT1078Package2.LogicChannelNumber = (byte)channelNo;
                 jT1078Package2.SN = SeqUtil.Increment(sim);
                 jT1078Package2.Timestamp = timestamp;
                 jT1078Package2.Label2 = new JT1078Label2(1, jT1078AVType);
-                jT1078Package2.Label3 = new JT1078Label3(JT1078DataType.音频帧, JT1078SubPackageType.分包处理时的最后一个包);
+                jT1078Package2.Label3 = new JT1078Label3(JT1078DataType.AudioFrame, JT1078SubPackageType.LastPacket);
                 jT1078Package2.Bodies = buffer[1];
                 jT1078Packages.Add(jT1078Package2);
             }
@@ -66,20 +66,20 @@ namespace JT1078.Protocol
                     jT1078Package.SN = SeqUtil.Increment(sim);
                     jT1078Package.Timestamp = timestamp;
                     jT1078Package.Label2 = new JT1078Label2(0, jT1078AVType);
-                    jT1078Package.Label3 = new JT1078Label3(JT1078DataType.音频帧);
+                    jT1078Package.Label3 = new JT1078Label3(JT1078DataType.AudioFrame);
                     jT1078Package.Bodies = buffer[i];
                     if (i == 0)
                     {
-                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.分包处理时的第一个包;
+                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.FirstPacket;
                     }
                     else if (i == (buffer.Count - 1))
                     {
                         jT1078Package.Label2.M = 1;
-                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.分包处理时的最后一个包;
+                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.LastPacket;
                     }
                     else
                     {
-                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.分包处理时的中间包;
+                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.IntermediatePacket;
                     }
                     jT1078Packages.Add(jT1078Package);
                 }
@@ -99,10 +99,10 @@ namespace JT1078.Protocol
         /// <param name="lastIFrameInterval"></param>
         /// <param name="lastFrameInterval"></param>
         /// <returns></returns>
-        public static List<JT1078Package> ConvertVideo(this byte[] value, string sim, 
+        public static List<JT1078Package> ConvertVideo(this byte[] value, string sim,
             int channelNo,
             JT1078AVType jT1078AVType,
-            JT1078DataType jT1078DataType, 
+            JT1078DataType jT1078DataType,
             ulong timestamp,
             int lastIFrameInterval,
             int lastFrameInterval)
@@ -119,7 +119,7 @@ namespace JT1078.Protocol
                 jT1078Package.LastIFrameInterval = (ushort)lastIFrameInterval;
                 jT1078Package.LastFrameInterval = (ushort)lastFrameInterval;
                 jT1078Package.Label2 = new JT1078Label2(1, jT1078AVType);
-                jT1078Package.Label3 = new JT1078Label3(jT1078DataType, JT1078SubPackageType.原子包_不可被拆分);
+                jT1078Package.Label3 = new JT1078Label3(jT1078DataType, JT1078SubPackageType.AtomicPacket);
                 jT1078Package.Bodies = buffer[0];
                 jT1078Packages.Add(jT1078Package);
             }
@@ -133,7 +133,7 @@ namespace JT1078.Protocol
                 jT1078Package1.LastIFrameInterval = (ushort)lastIFrameInterval;
                 jT1078Package1.LastFrameInterval = (ushort)lastFrameInterval;
                 jT1078Package1.Label2 = new JT1078Label2(0, jT1078AVType);
-                jT1078Package1.Label3 = new JT1078Label3(jT1078DataType, JT1078SubPackageType.分包处理时的第一个包);
+                jT1078Package1.Label3 = new JT1078Label3(jT1078DataType, JT1078SubPackageType.FirstPacket);
                 jT1078Package1.Bodies = buffer[0];
                 jT1078Packages.Add(jT1078Package1);
                 JT1078Package jT1078Package2 = new JT1078Package();
@@ -144,7 +144,7 @@ namespace JT1078.Protocol
                 jT1078Package2.LastIFrameInterval = (ushort)lastIFrameInterval;
                 jT1078Package2.LastFrameInterval = (ushort)lastFrameInterval;
                 jT1078Package2.Label2 = new JT1078Label2(1, jT1078AVType);
-                jT1078Package2.Label3 = new JT1078Label3(jT1078DataType, JT1078SubPackageType.分包处理时的最后一个包);
+                jT1078Package2.Label3 = new JT1078Label3(jT1078DataType, JT1078SubPackageType.LastPacket);
                 jT1078Package2.Bodies = buffer[1];
                 jT1078Packages.Add(jT1078Package2);
             }
@@ -164,16 +164,16 @@ namespace JT1078.Protocol
                     jT1078Package.Bodies = buffer[i];
                     if (i == 0)
                     {
-                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.分包处理时的第一个包;
+                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.FirstPacket;
                     }
                     else if (i == (buffer.Count - 1))
                     {
                         jT1078Package.Label2.M = 1;
-                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.分包处理时的最后一个包;
+                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.LastPacket;
                     }
                     else
                     {
-                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.分包处理时的中间包;
+                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.IntermediatePacket;
                     }
                     jT1078Packages.Add(jT1078Package);
                 }
@@ -198,8 +198,8 @@ namespace JT1078.Protocol
                 jT1078Package.SIM = sim;
                 jT1078Package.LogicChannelNumber = (byte)channelNo;
                 jT1078Package.SN = SeqUtil.Increment(sim);
-                jT1078Package.Label2 = new JT1078Label2(1,  JT1078AVType.透传);
-                jT1078Package.Label3 = new JT1078Label3(JT1078DataType.透传数据, JT1078SubPackageType.原子包_不可被拆分);
+                jT1078Package.Label2 = new JT1078Label2(1, JT1078AVType.透传);
+                jT1078Package.Label3 = new JT1078Label3(JT1078DataType.TransparentData, JT1078SubPackageType.AtomicPacket);
                 jT1078Package.Bodies = buffer[0];
                 jT1078Packages.Add(jT1078Package);
             }
@@ -210,7 +210,7 @@ namespace JT1078.Protocol
                 jT1078Package1.LogicChannelNumber = (byte)channelNo;
                 jT1078Package1.SN = SeqUtil.Increment(sim);
                 jT1078Package1.Label2 = new JT1078Label2(0, JT1078AVType.透传);
-                jT1078Package1.Label3 = new JT1078Label3(JT1078DataType.透传数据, JT1078SubPackageType.分包处理时的第一个包);
+                jT1078Package1.Label3 = new JT1078Label3(JT1078DataType.TransparentData, JT1078SubPackageType.FirstPacket);
                 jT1078Package1.Bodies = buffer[0];
                 jT1078Packages.Add(jT1078Package1);
                 JT1078Package jT1078Package2 = new JT1078Package();
@@ -218,7 +218,7 @@ namespace JT1078.Protocol
                 jT1078Package2.LogicChannelNumber = (byte)channelNo;
                 jT1078Package2.SN = SeqUtil.Increment(sim);
                 jT1078Package2.Label2 = new JT1078Label2(1, JT1078AVType.透传);
-                jT1078Package2.Label3 = new JT1078Label3(JT1078DataType.透传数据, JT1078SubPackageType.分包处理时的最后一个包);
+                jT1078Package2.Label3 = new JT1078Label3(JT1078DataType.TransparentData, JT1078SubPackageType.LastPacket);
                 jT1078Package2.Bodies = buffer[1];
                 jT1078Packages.Add(jT1078Package2);
             }
@@ -231,20 +231,20 @@ namespace JT1078.Protocol
                     jT1078Package.LogicChannelNumber = (byte)channelNo;
                     jT1078Package.SN = SeqUtil.Increment(sim);
                     jT1078Package.Label2 = new JT1078Label2(0, JT1078AVType.透传);
-                    jT1078Package.Label3 = new JT1078Label3(JT1078DataType.透传数据);
+                    jT1078Package.Label3 = new JT1078Label3(JT1078DataType.TransparentData);
                     jT1078Package.Bodies = buffer[i];
                     if (i == 0)
                     {
-                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.分包处理时的第一个包;
+                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.FirstPacket;
                     }
                     else if (i == (buffer.Count - 1))
                     {
                         jT1078Package.Label2.M = 1;
-                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.分包处理时的最后一个包;
+                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.LastPacket;
                     }
                     else
                     {
-                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.分包处理时的中间包;
+                        jT1078Package.Label3.SubpackageType = JT1078SubPackageType.IntermediatePacket;
                     }
                     jT1078Packages.Add(jT1078Package);
                 }

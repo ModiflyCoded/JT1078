@@ -22,7 +22,7 @@ using JT1078.Protocol.Enums;
 
 namespace JT1078.SignalR.Test.Services
 {
-    public  class ToWebSocketService: BackgroundService
+    public class ToWebSocketService : BackgroundService
     {
         private readonly ILogger<ToWebSocketService> logger;
 
@@ -84,7 +84,7 @@ namespace JT1078.SignalR.Test.Services
                     Mp4Frame mp4Frame = new Mp4Frame
                     {
                         Key = package.GetKey(),
-                        KeyFrame = package.Label3.DataType == JT1078DataType.视频I帧
+                        KeyFrame = package.Label3.DataType == JT1078DataType.VideoIFrame
                     };
                     mp4Frame.NALUs = h264NALUs;
                     mp4Frames.Enqueue(mp4Frame);
@@ -103,7 +103,7 @@ namespace JT1078.SignalR.Test.Services
             public List<H264NALU> NALUs { get; set; }
         }
 
-        public Dictionary<string,int> flag = new Dictionary<string, int>();
+        public Dictionary<string, int> flag = new Dictionary<string, int>();
 
         protected async override Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -112,7 +112,7 @@ namespace JT1078.SignalR.Test.Services
             {
                 try
                 {
-                    foreach(var session in wsSession.GetAll())
+                    foreach (var session in wsSession.GetAll())
                     {
                         if (flag.ContainsKey(session))
                         {
@@ -134,7 +134,7 @@ namespace JT1078.SignalR.Test.Services
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex,"");
+                    logger.LogError(ex, "");
                 }
                 await Task.Delay(60);
             }
