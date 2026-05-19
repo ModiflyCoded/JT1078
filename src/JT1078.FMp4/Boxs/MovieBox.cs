@@ -25,7 +25,7 @@ namespace JT1078.FMp4
         /// <summary>
         /// trak
         /// </summary>
-        public TrackBox TrackBox { get; set; }
+        public List<TrackBox> TrackBoxes { get; set; }
         /// <summary>
         /// mvex
         /// </summary>
@@ -39,7 +39,13 @@ namespace JT1078.FMp4
         {
             Start(ref writer);
             MovieHeaderBox.ToBuffer(ref writer);
-            TrackBox.ToBuffer(ref writer);
+            if (TrackBoxes != null)
+            {
+                foreach (var item in TrackBoxes)
+                {
+                    item.ToBuffer(ref writer);
+                }
+            }
             if (MovieExtendsBox != null)
             {
                 MovieExtendsBox.ToBuffer(ref writer);

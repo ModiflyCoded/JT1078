@@ -127,6 +127,16 @@
             sample_count is taken from the sample_count in the Sample Size Box ('stsz').
             </summary>
         </member>
+        <member name="T:JT1078.FMp4.ElementaryStreamDescriptorBox">
+            <summary>
+            esds
+            </summary>
+        </member>
+        <member name="P:JT1078.FMp4.ElementaryStreamDescriptorBox.Config">
+            <summary>
+            AudioSpecificConfig
+            </summary>
+        </member>
         <member name="P:JT1078.FMp4.FDItemInformationBox.PartitionEntries">
             <summary>
             length:EntryCount
@@ -351,6 +361,11 @@
             vmhd
             </summary>
         </member>
+        <member name="P:JT1078.FMp4.MediaInformationBox.SoundMediaHeaderBox">
+            <summary>
+            smhd
+            </summary>
+        </member>
         <member name="P:JT1078.FMp4.MediaInformationBox.DataInformationBox">
             <summary>
             dinf
@@ -376,7 +391,7 @@
             mvhd
             </summary>
         </member>
-        <member name="P:JT1078.FMp4.MovieBox.TrackBox">
+        <member name="P:JT1078.FMp4.MovieBox.TrackBoxes">
             <summary>
             trak
             </summary>
@@ -1362,7 +1377,7 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="M:JT1078.FMp4.FMp4Encoder.MoovBox(JT1078.Protocol.H264.H264NALU@,JT1078.Protocol.H264.H264NALU@)">
+        <member name="M:JT1078.FMp4.FMp4Encoder.MoovBox(JT1078.Protocol.H264.H264NALU@,JT1078.Protocol.H264.H264NALU@,System.Byte[])">
             <summary>
             编码moov盒子
             </summary>
@@ -1384,12 +1399,13 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="M:JT1078.FMp4.FMp4Encoder.FirstVideoBox(JT1078.Protocol.JT1078AVFrame@)">
+        <member name="M:JT1078.FMp4.FMp4Encoder.FirstVideoBox(JT1078.Protocol.JT1078AVFrame@,System.Byte[])">
             <summary>
             编码首帧
             ftyp moov
             </summary>
             <param name="avframe"></param>
+            <param name="aacConfig"></param>
             <returns></returns>
         </member>
         <member name="M:JT1078.FMp4.FMp4Encoder.OtherVideoBox(System.Collections.Generic.List{JT1078.Protocol.H264.H264NALU}@,System.String@,System.Boolean@)">
@@ -1397,6 +1413,13 @@
             编码其他视频数据盒子
             styp sidx moof mdat
             ...
+            styp sidx moof mdat
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:JT1078.FMp4.FMp4Encoder.OtherAudioBox(System.Collections.Generic.List{System.Byte[]}@,System.String@)">
+            <summary>
+            编码音频数据盒子
             styp sidx moof mdat
             </summary>
             <returns></returns>

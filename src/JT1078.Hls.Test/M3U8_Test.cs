@@ -31,20 +31,20 @@ namespace JT1078.Hls.Test
                     {
                         lasttime = long.Parse(temp[0]);
                     }
-                    else 
+                    else
                     {
                         var ts = long.Parse(temp[0]) - lasttime;
-                        if(ts>0)
+                        if (ts > 0)
                         {
                             Thread.Sleep(TimeSpan.FromMilliseconds(ts));
                         }
                         else if (ts == 0)
                         {
-                           
+
                         }
                         lasttime = long.Parse(temp[0]);
                     }
-                    var data= temp[1].ToHexBytes();
+                    var data = temp[1].ToHexBytes();
                     clientSocket.Send(data);
                 }
             }
@@ -66,14 +66,14 @@ namespace JT1078.Hls.Test
                 var m3u8_filename = Path.Combine(hls_file_directory, "live.m3u8");
                 TSEncoder tSEncoder = new TSEncoder();
                 var m3u8Manage = new M3U8FileManage(new Options.M3U8Option { HlsFileDirectory = hls_file_directory, M3U8FileName = m3u8_filename }, tSEncoder);
-         
+
                 var lines = File.ReadAllLines(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "H264", "JT1078_3.txt"));
                 foreach (var line in lines)
                 {
                     var data = line.Split(',');
                     var bytes = data[6].ToHexBytes();
                     JT1078Package package = JT1078Serializer.Deserialize(bytes);
-                    JT1078Package fullpackage = JT1078Serializer.Merge(package);
+                    JT1078Package fullpackage = JT1078Serializer.Merge(package, Protocol.Enums.JT808ChannelType.Live);
                     if (fullpackage != null)
                     {
                         m3u8Manage.CreateTsData(fullpackage);

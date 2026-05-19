@@ -58,11 +58,11 @@ namespace JT1078.Hls.Test
             package.Header.PayloadUnitStartIndicator = 1;
             package.Header.Adaptation = new TS_AdaptationInfo();
             package.Header.Adaptation.Timestamp = 18900000;
-            package.Header.Adaptation.PCRIncluded =  PCRInclude.包含;
+            package.Header.Adaptation.PCRIncluded = PCRInclude.包含;
             package.Payload = new PES_Package();
             package.Payload.PTS = 132171;
             package.Payload.DTS = 126000;
-            package.Payload.PTS_DTS_Flag =  PTS_DTS_Flags.all;
+            package.Payload.PTS_DTS_Flag = PTS_DTS_Flags.all;
             package.Payload.Payload = new ES_Package();
             package.Payload.Payload.NALUs = new List<byte[]>();
             package.Payload.Payload.NALUs.Add("00 00 00 01 67 64 00 1F AC D9 40 88 1E 68 40 00 00 03 01 80 00 00 57 83 C6 0C 65 80 00 00 00 01 68 EB E3 CB 22 C0 00 00 01 06 05 FF FF AB DC 45 E9 BD E6 D9 48 B7 96 2C D8 20 D9 23 EE EF 78 32 36 34 20 2D 20 63 6F 72 65 20 31 35 38 20 72 32 39 38 34 20 33 37 35 39 66 63 62 20 2D 20 48 2E 32 36 34 2F 4D 50 45 47 2D 34 20 41 56 43 20 63 6F 64 65 63 20 2D 20 43 6F 70 79 6C 65 66 74 20 32 30 30 33 2D 32 30 31 39 20 2D 20 68 74 74 70 3A 2F 2F 77 77 77 2E".ToHexBytes());
@@ -87,7 +87,7 @@ namespace JT1078.Hls.Test
                     var data = line.Split(',');
                     var bytes = data[6].ToHexBytes();
                     JT1078Package package = JT1078Serializer.Deserialize(bytes);
-                    JT1078Package fullpackage = JT1078Serializer.Merge(package);
+                    JT1078Package fullpackage = JT1078Serializer.Merge(package, Protocol.Enums.JT808ChannelType.Live);
                     if (fullpackage != null)
                     {
                         var sdt = tSEncoder.CreateSDT();
@@ -134,7 +134,7 @@ namespace JT1078.Hls.Test
                     var data = line.Split(',');
                     var bytes = data[6].ToHexBytes();
                     JT1078Package package = JT1078Serializer.Deserialize(bytes);
-                    JT1078Package fullpackage = JT1078Serializer.Merge(package);
+                    JT1078Package fullpackage = JT1078Serializer.Merge(package, Protocol.Enums.JT808ChannelType.Live);
                     if (fullpackage != null)
                     {
                         if (isNeedFirstHeadler)
@@ -154,11 +154,11 @@ namespace JT1078.Hls.Test
                         else
                         {
                             fileStream.Write(tSEncoder.CreatePES(fullpackage, 18888));
-                        }              
+                        }
                     }
                 }
             }
-            catch (Exception ex)           
+            catch (Exception ex)
             {
                 Assert.Throws<Exception>(() => { });
             }

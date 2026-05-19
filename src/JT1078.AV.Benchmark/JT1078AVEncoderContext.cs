@@ -42,7 +42,7 @@ namespace JT1078.AV.Benchmark
                 var data = line.Split(',');
                 var bytes = data[6].ToHexBytes();
                 JT1078Package package = JT1078Serializer.Deserialize(bytes);
-                Package = JT1078Serializer.Merge(package);
+                Package = JT1078Serializer.Merge(package, Protocol.Enums.JT808ChannelType.Live);
             }
             H264NALUs = h264Decoder.ParseNALU(Package);
             SPSNALu = H264NALUs.FirstOrDefault(f => f.NALUHeader.NalUnitType == NalUnitType.SPS);
@@ -57,7 +57,7 @@ namespace JT1078.AV.Benchmark
                 var bytes = data[6].ToHexBytes();
                 JT1078Package package = JT1078Serializer.Deserialize(bytes);
                 mergeBodyLength += package.DataBodyLength;
-                var packageMerge = JT1078Serializer.Merge(package);
+                var packageMerge = JT1078Serializer.Merge(package, Protocol.Enums.JT808ChannelType.Live);
                 if (packageMerge != null)
                 {
                     packages.Add(packageMerge);

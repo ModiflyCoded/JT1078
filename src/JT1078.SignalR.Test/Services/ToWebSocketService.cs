@@ -60,7 +60,7 @@ namespace JT1078.SignalR.Test.Services
                 var bytes = line.ToHexBytes();
                 JT1078Package package = JT1078Serializer.Deserialize(bytes);
                 mergeBodyLength += package.DataBodyLength;
-                var packageMerge = JT1078Serializer.Merge(package);
+                var packageMerge = JT1078Serializer.Merge(package, JT808ChannelType.Live);
                 if (packageMerge != null)
                 {
                     packages.Add(packageMerge);

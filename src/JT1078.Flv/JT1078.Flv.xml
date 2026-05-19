@@ -186,6 +186,12 @@
             
             </summary>
         </member>
+        <member name="M:JT1078.Flv.FlvEncoder.#ctor(JT1078.Protocol.Audio.IAudioEncoder)">
+            <summary>
+            
+            </summary>
+            <param name="aacEncoder"></param>
+        </member>
         <member name="M:JT1078.Flv.FlvEncoder.EncoderFlvHeader(System.Boolean,System.Boolean)">
             <summary>
             编码flv头

@@ -22,6 +22,10 @@ namespace JT1078.FMp4
         /// </summary>
         public VideoMediaHeaderBox VideoMediaHeaderBox { get; set; }
         /// <summary>
+        /// smhd
+        /// </summary>
+        public SoundMediaHeaderBox SoundMediaHeaderBox { get; set; }
+        /// <summary>
         /// dinf
         /// </summary>
         public DataInformationBox DataInformationBox { get; set; }
@@ -36,6 +40,10 @@ namespace JT1078.FMp4
             if (VideoMediaHeaderBox != null)
             {
                 VideoMediaHeaderBox.ToBuffer(ref writer);
+            }
+            if (SoundMediaHeaderBox != null)
+            {
+                SoundMediaHeaderBox.ToBuffer(ref writer);
             }
             DataInformationBox.ToBuffer(ref writer);
             SampleTableBox.ToBuffer(ref writer);
