@@ -370,7 +370,7 @@ namespace JT1078.Flv
         /// <returns></returns>
         public byte[] EncoderAudioTag(JT1078Package package, bool needAacHeader = false)
         {
-            if (package.Label3.DataType != JT1078DataType.音频帧) throw new Exception("Incorrect parameter, package must be audio frame");
+            if (package.Label3.DataType != JT1078DataType.AudioFrame) throw new Exception("Incorrect parameter, package must be audio frame");
             byte[] buffer = FlvArrayPool.Rent(package.Bodies.Length * 2 + 4096);
             try
             {

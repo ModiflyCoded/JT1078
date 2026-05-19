@@ -70,7 +70,6 @@ namespace JT1078.Hls
                     RunningStatus = TS_SDT_Service_RunningStatus.运行,
                     FreeCAMode = 0x00,
                     Descriptors = new List<TS_SDT_Service_Descriptor>
-                    Descriptors = new List<TS_SDT_Service_Descriptor>
                     {
                          new TS_SDT_Service_Descriptor{
                             Tag=0x48,
@@ -169,18 +168,17 @@ namespace JT1078.Hls
                 package.Header.PackageType = PackageType.Data_Start;
                 string key = jt1078Package.GetKey();
                 if (VideoCounter.TryGetValue(key, out byte counter))
-                    if (VideoCounter.TryGetValue(key, out byte counter))
+                {
+                    if (counter > 0xf)
                     {
-                        if (counter > 0xf)
-                        {
-                            counter = 0;
-                            counter = 0;
-                        }
+                        counter = 0;
+                        counter = 0;
                     }
-                    else
-                    {
-                        VideoCounter.Add(key, counter);
-                    }
+                }
+                else
+                {
+                    VideoCounter.Add(key, counter);
+                }
                 package.Header.ContinuityCounter = counter;
                 counter++;
                 package.Header.PayloadUnitStartIndicator = 1;
@@ -239,54 +237,53 @@ namespace JT1078.Hls
                     package.ToBuffer(ref messagePackReader);
                 }
                 else if (fullSize == 0)
-                else if (fullSize == 0)
+                {
+                    //这个很重要，需要控制
+                    package.Header.AdaptationFieldControl = AdaptationFieldControl.无自适应域_仅含有效负载;
+                    //刚刚好
+                    package.Header.Adaptation.FillSize = 0;
+                    package.Payload.Payload.NALUs = new List<byte[]>() { jt1078Package.Bodies };
+                    package.ToBuffer(ref messagePackReader);
+                }
+                else
+                {
+                    //这个很重要，需要控制
+                    package.Header.AdaptationFieldControl = AdaptationFieldControl.同时带有自适应域和有效负载;
+                    //太多了，需要拆分
+                    package.Header.Adaptation.FillSize = 0;
+                    package.Payload.Payload.NALUs = new List<byte[]>();
+                    ReadOnlySpan<byte> dataReader = jt1078Package.Bodies;
+                    package.Payload.Payload.NALUs.Add(dataReader.Slice(index, remainingLength).ToArray());
+                    index += remainingLength;
+                    package.ToBuffer(ref messagePackReader);
+                    while (index != jt1078Package.Bodies.Length)
+                        while (index != jt1078Package.Bodies.Length)
                         {
-                            //这个很重要，需要控制
-                            package.Header.AdaptationFieldControl = AdaptationFieldControl.无自适应域_仅含有效负载;
-                            //刚刚好
-                            package.Header.Adaptation.FillSize = 0;
-                            package.Payload.Payload.NALUs = new List<byte[]>() { jt1078Package.Bodies };
-                            package.ToBuffer(ref messagePackReader);
+                            if (counter > 0xf)
+                            {
+                                counter = 0;
+                            }
+                            int segmentFullSize = jt1078Package.Bodies.Length - index;
+                            if (segmentFullSize >= FiexdSegmentPESLength)
+                            {
+                                CreateSegmentPES(ref messagePackReader, dataReader.Slice(index, FiexdSegmentPESLength).ToArray(), counter);
+                                index += FiexdSegmentPESLength;
+                            }
+                            else
+                            {
+                                var nalu = dataReader.Slice(index, segmentFullSize).ToArray();
+                                //当等于183字节的时候
+                                //12698D08E8DBDBCDF6C6FA19DD88490E908D687D1755BE87DF82754BE2D245270569310B3030A4904DF1883ED09A68CA1C79BC4B97642B5BC095A55E56868D05370D3BC8B7B60B4642A486B6852656C01FFADACEF4BD4320E8BE9C54D44177A433CC37493FA1D8ACD0164E92454D03B6EC0617B133AEF43B599BF85632AB9B5FF671F0DDAA07E8F279F5639BA88E3FFFFCE1D3351FAF43DF23BCEB7E3B2CAB3EABAED23B25097B7F51FF38E8D0EBAB589CEC42B0440EB8
+                                //if (jt1078Package.Label3.DataType == JT1078DataType.视频P帧)
+                                //{
+                                //    string hex = dataReader.Slice(index, segmentFullSize).ToArray().ToHexString();
+                                //}
+                                CreateSegmentPES(ref messagePackReader, dataReader.Slice(index, segmentFullSize).ToArray(), counter);
+                                index += segmentFullSize;
+                            }
+                            counter++;
                         }
-                        else
-                        {
-                            //这个很重要，需要控制
-                            package.Header.AdaptationFieldControl = AdaptationFieldControl.同时带有自适应域和有效负载;
-                            //太多了，需要拆分
-                            package.Header.Adaptation.FillSize = 0;
-                            package.Payload.Payload.NALUs = new List<byte[]>();
-                            ReadOnlySpan<byte> dataReader = jt1078Package.Bodies;
-                            package.Payload.Payload.NALUs.Add(dataReader.Slice(index, remainingLength).ToArray());
-                            index += remainingLength;
-                            package.ToBuffer(ref messagePackReader);
-                            while (index != jt1078Package.Bodies.Length)
-                                while (index != jt1078Package.Bodies.Length)
-                                {
-                                    if (counter > 0xf)
-                                    {
-                                        counter = 0;
-                                    }
-                                    int segmentFullSize = jt1078Package.Bodies.Length - index;
-                                    if (segmentFullSize >= FiexdSegmentPESLength)
-                                    {
-                                        CreateSegmentPES(ref messagePackReader, dataReader.Slice(index, FiexdSegmentPESLength).ToArray(), counter);
-                                        index += FiexdSegmentPESLength;
-                                    }
-                                    else
-                                    {
-                                        var nalu = dataReader.Slice(index, segmentFullSize).ToArray();
-                                        //当等于183字节的时候
-                                        //12698D08E8DBDBCDF6C6FA19DD88490E908D687D1755BE87DF82754BE2D245270569310B3030A4904DF1883ED09A68CA1C79BC4B97642B5BC095A55E56868D05370D3BC8B7B60B4642A486B6852656C01FFADACEF4BD4320E8BE9C54D44177A433CC37493FA1D8ACD0164E92454D03B6EC0617B133AEF43B599BF85632AB9B5FF671F0DDAA07E8F279F5639BA88E3FFFFCE1D3351FAF43DF23BCEB7E3B2CAB3EABAED23B25097B7F51FF38E8D0EBAB589CEC42B0440EB8
-                                        //if (jt1078Package.Label3.DataType == JT1078DataType.视频P帧)
-                                        //{
-                                        //    string hex = dataReader.Slice(index, segmentFullSize).ToArray().ToHexString();
-                                        //}
-                                        CreateSegmentPES(ref messagePackReader, dataReader.Slice(index, segmentFullSize).ToArray(), counter);
-                                        index += segmentFullSize;
-                                    }
-                                    counter++;
-                                }
-                        }
+                }
                 VideoCounter[key] = counter;
                 VideoCounter[key] = counter;
                 return messagePackReader.FlushAndGetArray();
@@ -296,7 +293,6 @@ namespace JT1078.Hls
                 TSArrayPool.Return(buffer);
             }
         }
-        internal void CreateSegmentPES(ref TSMessagePackWriter writer, byte[] nalu, byte counter)
         internal void CreateSegmentPES(ref TSMessagePackWriter writer, byte[] nalu, byte counter)
         {
             TS_Segment_Package package = new TS_Segment_Package();
