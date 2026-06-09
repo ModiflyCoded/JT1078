@@ -19,7 +19,7 @@ namespace JT1078.Flv.Metadata
         /// 2 = 22-kHz
         /// 3 = 44-kHz
         /// </summary>
-        public int SampleRate => 3;
+        public int SampleRate => 1;
         /// <summary>
         /// 采样位深
         /// </summary>
@@ -28,11 +28,13 @@ namespace JT1078.Flv.Metadata
         /// 声道
         /// AAC永远是1
         /// </summary>
-        public ChannelType Channel => ChannelType.Stereo;
+        // public ChannelType Channel => ChannelType.Stereo;
+        public ChannelType Channel => ChannelType.Mono;
         /// <summary>
         /// 音频格式
         /// </summary>
-        public AudioFormat SoundType => AudioFormat.AAC;
+        // public AudioFormat SoundType => AudioFormat.AAC;
+        public AudioFormat SoundType => AudioFormat.Pcm_Little;
 
         /// <summary>
         /// 元数据

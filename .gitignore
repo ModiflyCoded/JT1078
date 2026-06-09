@@ -337,3 +337,4 @@ ASALocalRun/
 /doc/tools/mp4info.exe
 /nupkgs
 nuget.config
+ffmpeg.exe

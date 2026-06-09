@@ -39,6 +39,10 @@ namespace JT1078.Flv
     {
         readonly H264Decoder h264Decoder;
         readonly AudioCodecFactory audioCodecFactory;
+
+        public ulong _baseTimeStamp = 0;
+        public ulong _lastAudioTimeStamp = 0;
+
         //public FlvEncoder(int sampleRate = 8000, int channels = 1, int sampleBit = 16, bool adts = false)
         /// <summary>
         /// 
@@ -285,7 +289,7 @@ namespace JT1078.Flv
         /// </summary>
         /// <param name="timestamp"></param>
         /// <returns></returns>
-        public byte[] EncoderFirstAudioTag(ulong timestamp)
+        public byte[] EncoderFirstAudioTag()
         {
             byte[] buffer = FlvArrayPool.Rent(2048);
             try
@@ -296,7 +300,8 @@ namespace JT1078.Flv
                 FlvTags flvTags = new FlvTags
                 {
                     Type = TagType.Audio,
-                    Timestamp = (uint)timestamp,
+                    // Timestamp = (uint)timestamp,
+                    Timestamp = 0,
                     //flv body tag body
                     AudioTagsData = new AudioTags(AACPacketType.AudioSpecificConfig)
                 };
@@ -319,10 +324,15 @@ namespace JT1078.Flv
         /// <returns></returns>
         public byte[] EncoderVideoTag(JT1078Package package, bool needVideoHeader = false)
         {
+            if (_baseTimeStamp == 0)
+            {
+                _baseTimeStamp = package.Timestamp;
+            }
+
             if (package.Label3.DataType == JT1078DataType.AudioFrame) return default;
             byte[] buffer = FlvArrayPool.Rent(package.Bodies.Length * 2 + 4096);
             FlvMessagePackWriter flvMessagePackWriter = new FlvMessagePackWriter(buffer);
-            var nalus = h264Decoder.ParseNALU(package);
+            var nalus = h264Decoder.ParseNALU(package, null, _baseTimeStamp);
             if (nalus != null && nalus.Count > 0)
             {
                 var sei = nalus.FirstOrDefault(x => x.NALUHeader.NalUnitType == NalUnitType.SEI);
@@ -370,6 +380,24 @@ namespace JT1078.Flv
         /// <returns></returns>
         public byte[] EncoderAudioTag(JT1078Package package, bool needAacHeader = false)
         {
+            if (_baseTimeStamp == 0)
+            {
+                _baseTimeStamp = package.Timestamp;
+            }
+
+            var currentAudioTimestamp = package.Timestamp;
+            if (currentAudioTimestamp < _lastAudioTimeStamp)
+            {
+                currentAudioTimestamp = _lastAudioTimeStamp;
+            }
+            uint timestamp = (uint)(currentAudioTimestamp - _baseTimeStamp);
+            if (needAacHeader)
+            {
+                timestamp = 0;
+            }
+
+            _lastAudioTimeStamp = package.Timestamp;
+
             if (package.Label3.DataType != JT1078DataType.AudioFrame) throw new Exception("Incorrect parameter, package must be audio frame");
             byte[] buffer = FlvArrayPool.Rent(package.Bodies.Length * 2 + 4096);
             try
@@ -377,13 +405,13 @@ namespace JT1078.Flv
                 FlvMessagePackWriter flvMessagePackWriter = new FlvMessagePackWriter(buffer);
                 if (needAacHeader)
                 {
-                    flvMessagePackWriter.WriteArray(EncoderFirstAudioTag(package.Timestamp));
+                    flvMessagePackWriter.WriteArray(EncoderFirstAudioTag());
                 }
                 byte[] aacFrameData = audioCodecFactory.Encode(package.Label2.PT, package.Bodies);
                 if (aacFrameData != null && aacFrameData.Any())//编码成功，此时为一帧aac音频数据
                 {
                     // Data Tag Frame
-                    flvMessagePackWriter.WriteArray(EncoderAacAudioTag((uint)package.Timestamp, aacFrameData));
+                    flvMessagePackWriter.WriteArray(EncoderAacAudioTag(timestamp, aacFrameData));
                 }
                 return flvMessagePackWriter.FlushAndGetArray();
             }

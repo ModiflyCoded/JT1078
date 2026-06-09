@@ -35,6 +35,12 @@
     <ProjectReference Include="..\JT1078.Flv\JT1078.Flv.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ffmpeg\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="samples\raw-network-packets\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Update="Audio\Files\testpacket.pcm">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

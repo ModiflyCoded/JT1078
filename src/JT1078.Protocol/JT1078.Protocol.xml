@@ -173,7 +173,7 @@
             <param name="value"></param>
             <returns></returns>
         </member>
-        <member name="M:JT1078.Protocol.H264.H264Decoder.ParseNALU(JT1078.Protocol.JT1078Package,System.String)">
+        <member name="M:JT1078.Protocol.H264.H264Decoder.ParseNALU(JT1078.Protocol.JT1078Package,System.String,System.UInt64)">
             <summary>
             
             <see cref="!:https://github.com/samirkumardas/jmuxer/blob/master/src/parsers/h264.js"/>

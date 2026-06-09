@@ -4,7 +4,7 @@ using System.Text;
 
 namespace JT1078.Protocol.Audio
 {
-    public class AdpcmCodec: IAudioCodec
+    public class AdpcmCodec : IAudioCodec
     {
         static readonly int[] indexTable = {
             -1, -1, -1, -1, 2, 4, 6, 8,
@@ -199,6 +199,10 @@ namespace JT1078.Protocol.Audio
 
                 /* Step 6 - Update step value */
                 step = stepsizeTable[index];
+
+
+                // var pcmBytes = BitConverter.GetBytes((short)valpred);
+                // if()
 
                 /* Step 7 - Output value */
                 outdata.AddRange(BitConverter.GetBytes((short)valpred));

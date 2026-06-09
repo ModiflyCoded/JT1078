@@ -16,11 +16,11 @@ namespace JT1078.Protocol.H264
         /// <param name="package"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        public List<H264NALU> ParseNALU(JT1078Package package, string key = null)
+        public List<H264NALU> ParseNALU(JT1078Package package, string key = null, ulong baseTimeStamp = 0)
         {
             List<H264NALU> h264NALUs = new List<H264NALU>();
-            int i=0,state=0,laststate=0;
-            int? lastIndex=null;
+            int i = 0, state = 0, laststate = 0;
+            int? lastIndex = null;
             int length = package.Bodies.Length;
             byte value;
             ReadOnlySpan<byte> buffer = package.Bodies;
@@ -46,10 +46,10 @@ namespace JT1078.Protocol.H264
                             if (lastIndex.HasValue)
                             {
                                 var tmp = buffer.Slice(lastIndex.Value, i - state - 1 - lastIndex.Value);
-                                h264NALUs.Add(Create(package, tmp, state+1));
+                                h264NALUs.Add(Create(package, tmp, state + 1, baseTimeStamp));
                             }
                             lastIndex = i;
-                            laststate = state+1;
+                            laststate = state + 1;
                             state = 0;
                         }
                         else
@@ -63,7 +63,7 @@ namespace JT1078.Protocol.H264
             }
             if (lastIndex.HasValue)
             {
-                h264NALUs.Add(Create(package, buffer.Slice(lastIndex.Value), laststate));
+                h264NALUs.Add(Create(package, buffer.Slice(lastIndex.Value), laststate, baseTimeStamp));
             }
             return h264NALUs;
         }
@@ -119,9 +119,9 @@ namespace JT1078.Protocol.H264
                                     var spsInfo = h264GolombReader.ReadSPS();
                                     jT1078AVFrame.Width = spsInfo.width;
                                     jT1078AVFrame.Height = spsInfo.height;
-                                    jT1078AVFrame.LevelIdc= spsInfo.levelIdc;
-                                    jT1078AVFrame.ProfileIdc=spsInfo.profileIdc;
-                                    jT1078AVFrame.ProfileCompat=(byte)spsInfo.profileCompat;
+                                    jT1078AVFrame.LevelIdc = spsInfo.levelIdc;
+                                    jT1078AVFrame.ProfileIdc = spsInfo.profileIdc;
+                                    jT1078AVFrame.ProfileCompat = (byte)spsInfo.profileCompat;
                                 }
                                 jT1078AVFrame.Nalus.Add(nalu);
                             }
@@ -141,11 +141,11 @@ namespace JT1078.Protocol.H264
             if (lastIndex.HasValue)
             {
                 H264NALU nalu = Create(package, buffer.Slice(lastIndex.Value), laststate);
-                if(nalu.NALUHeader.NalUnitType== NalUnitType.PPS)
+                if (nalu.NALUHeader.NalUnitType == NalUnitType.PPS)
                 {
                     jT1078AVFrame.PPS = nalu;
                 }
-                else if(nalu.NALUHeader.NalUnitType == NalUnitType.SPS)
+                else if (nalu.NALUHeader.NalUnitType == NalUnitType.SPS)
                 {
                     jT1078AVFrame.SPS = nalu;
                     ExpGolombReader h264GolombReader = new ExpGolombReader(jT1078AVFrame.SPS.RawData);
@@ -169,7 +169,7 @@ namespace JT1078.Protocol.H264
         /// <param name="h264NALUs"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        public void ParseNALU(JT1078Package package, List<H264NALU> h264NALUs,string key = null)
+        public void ParseNALU(JT1078Package package, List<H264NALU> h264NALUs, string key = null)
         {
             int i = 0, state = 0, laststate = 0;
             int? lastIndex = null;
@@ -215,11 +215,11 @@ namespace JT1078.Protocol.H264
             }
             if (lastIndex.HasValue)
             {
-                h264NALUs.Add(Create(package, buffer.Slice(lastIndex.Value), laststate));              
+                h264NALUs.Add(Create(package, buffer.Slice(lastIndex.Value), laststate));
             }
         }
 
-        private H264NALU Create(JT1078Package package,ReadOnlySpan<byte> nalu, int startCodePrefix)
+        private H264NALU Create(JT1078Package package, ReadOnlySpan<byte> nalu, int startCodePrefix, ulong baseTimeStamp = 0)
         {
             H264NALU nALU = new H264NALU();
             nALU.SIM = package.SIM;
@@ -227,7 +227,18 @@ namespace JT1078.Protocol.H264
             nALU.LogicChannelNumber = package.LogicChannelNumber;
             nALU.LastFrameInterval = package.LastFrameInterval;
             nALU.LastIFrameInterval = package.LastIFrameInterval;
-            nALU.Timestamp = package.Timestamp;
+
+            if (baseTimeStamp > 0)
+            {
+                nALU.Timestamp = package.Timestamp - baseTimeStamp;
+            }
+            else
+            {
+                nALU.Timestamp = package.Timestamp;
+            }
+
+            // nALU.Timestamp = package.Timestamp;
+
             nALU.RawData = nalu.ToArray();
             if (startCodePrefix == 3)
             {
@@ -237,7 +248,7 @@ namespace JT1078.Protocol.H264
             {
                 nALU.StartCodePrefix = H264NALU.Start2;
             }
-            nALU.NALUHeader = new NALUHeader(nalu.Slice(0,1));  
+            nALU.NALUHeader = new NALUHeader(nalu.Slice(0, 1));
             return nALU;
         }
 
@@ -278,7 +289,7 @@ namespace JT1078.Protocol.H264
             var sourceIndex = 0;
             for (i = 0; i < newLength; sourceIndex++, i++)
             {
-                if (EPBPositions.Any()&&sourceIndex == EPBPositions[0])
+                if (EPBPositions.Any() && sourceIndex == EPBPositions[0])
                 {
                     // Skip this byte
                     sourceIndex++;
