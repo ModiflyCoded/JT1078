@@ -60,7 +60,10 @@ public class FlvAudioTest
             StartInfo = new ProcessStartInfo
             {
                 FileName = Path.Combine("ffmpeg", "ffmpeg.exe"),
-                Arguments = $"-f flv -i pipe:0 -c copy -movflags +faststart \"{outputPath}\"",
+                // this produces synced audio but we might not know the exact audio sample rate
+                // Arguments = $"-f flv -i pipe:0 -af \"asetrate=11025,aresample=8000\" -c:v copy -movflags +faststart -c:a aac \"{outputPath}\"",
+                // this handles syncing better but the background audio is choppy. Sounds like tapping is crisp but the constant background noise is not.
+                Arguments = $"-f flv -i pipe:0 -af \"asetrate=11025,aresample=async=1\" -c:v copy -movflags +faststart -c:a aac \"{outputPath}\"",
                 RedirectStandardInput = true,
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
