@@ -19,6 +19,7 @@ namespace JT1078.Protocol.Audio
             switch (aVType)
             {
                 case JT1078AVType.ADPCM:
+                    // return bodies;
                     ReadOnlySpan<byte> adpcm = bodies;
                     if (adpcm.StartsWith(HI)) adpcm = adpcm.Slice(4);
                     pcm = adpcmCodec.ToPcm(adpcm.Slice(4).ToArray(), new AdpcmState()

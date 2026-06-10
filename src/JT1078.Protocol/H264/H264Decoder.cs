@@ -228,7 +228,7 @@ namespace JT1078.Protocol.H264
             nALU.LastFrameInterval = package.LastFrameInterval;
             nALU.LastIFrameInterval = package.LastIFrameInterval;
 
-            if (baseTimeStamp > 0)
+            if (baseTimeStamp > 0 && package.Timestamp >= baseTimeStamp)
             {
                 nALU.Timestamp = package.Timestamp - baseTimeStamp;
             }

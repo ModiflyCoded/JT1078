@@ -20,6 +20,12 @@
     <ProjectReference Include="..\JT1078.Protocol\JT1078.Protocol.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ffmpeg\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="samples\raw-network-packets\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="..\..\doc\video\jt1078_3.txt" Link="H264\jt1078_3.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

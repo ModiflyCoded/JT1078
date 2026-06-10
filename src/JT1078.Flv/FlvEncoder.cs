@@ -403,15 +403,16 @@ namespace JT1078.Flv
             try
             {
                 FlvMessagePackWriter flvMessagePackWriter = new FlvMessagePackWriter(buffer);
-                if (needAacHeader)
-                {
-                    flvMessagePackWriter.WriteArray(EncoderFirstAudioTag());
-                }
-                byte[] aacFrameData = audioCodecFactory.Encode(package.Label2.PT, package.Bodies);
-                if (aacFrameData != null && aacFrameData.Any())//编码成功，此时为一帧aac音频数据
+                // if (needAacHeader)
+                // {
+                //     flvMessagePackWriter.WriteArray(EncoderFirstAudioTag());
+                // }
+                byte[] audioData = audioCodecFactory.Encode(package.Label2.PT, package.Bodies);
+                if (audioData != null && audioData.Any())//编码成功，此时为一帧aac音频数据
                 {
                     // Data Tag Frame
-                    flvMessagePackWriter.WriteArray(EncoderAacAudioTag(timestamp, aacFrameData));
+                    // flvMessagePackWriter.WriteArray(EncoderAacAudioTag(timestamp, audioData));
+                    flvMessagePackWriter.WriteArray(EncoderPcmAudioTag(timestamp, audioData));
                 }
                 return flvMessagePackWriter.FlushAndGetArray();
             }
@@ -492,6 +493,30 @@ namespace JT1078.Flv
                     StreamId = 0,
                     //flv body tag body
                     AudioTagsData = new AudioTags(AACPacketType.AudioFrame, aacFrameData)
+                };
+                flvMessagePackWriter.WriteFlvTag(flvTags);
+                flvMessagePackWriter.WriteUInt32((uint)(flvTags.DataSize + 11));
+                return flvMessagePackWriter.FlushAndGetArray();
+            }
+            finally
+            {
+                FlvArrayPool.Return(buffer);
+            }
+        }
+
+        byte[] EncoderPcmAudioTag(uint timestamp, byte[] pcmData)
+        {
+            byte[] buffer = FlvArrayPool.Rent(pcmData.Length + 1024);
+            try
+            {
+                FlvMessagePackWriter flvMessagePackWriter = new FlvMessagePackWriter(buffer);
+                FlvTags flvTags = new FlvTags
+                {
+                    Type = TagType.Audio,
+                    Timestamp = timestamp,
+                    TimestampExt = 0,
+                    StreamId = 0,
+                    AudioTagsData = new AudioTags(pcmData) // Uses the new PCM constructor
                 };
                 flvMessagePackWriter.WriteFlvTag(flvTags);
                 flvMessagePackWriter.WriteUInt32((uint)(flvTags.DataSize + 11));

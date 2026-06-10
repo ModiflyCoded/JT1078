@@ -7,6 +7,15 @@ namespace JT1078.Flv.Metadata
 {
     public class AudioTags
     {
+        private byte[] _rawData;
+
+
+        public AudioTags(byte[] pcmData)
+        {
+            SoundType = AudioFormat.Pcm_Little;
+            _rawData = pcmData;
+        }
+
         public AudioTags(AACPacketType packetType = AACPacketType.AudioSpecificConfig, byte[] aacFrameData = null)
         {
             AacPacke = new AacPacke(packetType, aacFrameData);
@@ -34,7 +43,7 @@ namespace JT1078.Flv.Metadata
         /// 音频格式
         /// </summary>
         // public AudioFormat SoundType => AudioFormat.AAC;
-        public AudioFormat SoundType => AudioFormat.Pcm_Little;
+        public AudioFormat SoundType { get; set; } = AudioFormat.Pcm_Little;
 
         /// <summary>
         /// 元数据
@@ -48,7 +57,14 @@ namespace JT1078.Flv.Metadata
             {
                 Convert.ToByte(value, 2)
             };
-            data.AddRange(AacPacke.RawData);
+            if (SoundType == AudioFormat.AAC && AacPacke != null)
+            {
+                data.AddRange(AacPacke.RawData);
+            }
+            else if (SoundType == AudioFormat.Pcm_Little && _rawData != null)
+            {
+                data.AddRange(_rawData);
+            }
             return data.ToArray();
         }
     }
