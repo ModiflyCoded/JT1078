@@ -41,6 +41,9 @@
     <Content Include="samples\raw-network-packets\*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="samples\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Update="Audio\Files\testpacket.pcm">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

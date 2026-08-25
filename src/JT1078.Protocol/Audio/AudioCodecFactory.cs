@@ -45,10 +45,10 @@ namespace JT1078.Protocol.Audio
                     return bodies;
             }
 
-            if (pcm != null && AACEncoder != null)
-            {
-                return AACEncoder.Encode(pcm);
-            }
+            // if (pcm != null && AACEncoder != null)
+            // {
+            //     return AACEncoder.Encode(pcm);
+            // }
 
             return pcm;
         }
